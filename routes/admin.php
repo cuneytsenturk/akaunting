@@ -201,6 +201,10 @@ Route::group(['prefix' => 'settings'], function () {
         Route::get('email-templates/get', 'Settings\EmailTemplates@get')->name('email-templates.get');
         Route::get('schedule', 'Settings\Schedule@edit')->name('schedule.edit');
         Route::patch('schedule', 'Settings\Schedule@update')->name('schedule.update');
+        
+        // Theme settings
+        Route::get('theme', 'Settings\Theme@show')->name('theme.show');
+        Route::post('theme', 'Settings\Theme@update')->name('theme.update');
     });
 });
 

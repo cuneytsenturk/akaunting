@@ -94,6 +94,13 @@
                 </button>
             </x-tooltip>
 
+            {{-- Theme Switcher --}}
+            <x-tooltip id="tooltip-theme" placement="right" message="{{ trans('general.theme') }}">
+                <div class="flex items-center justify-center w-8 h-8 mb-2.5">
+                    <x-theme-switcher buttonClass="w-8 h-8 flex items-center justify-center hover:bg-purple-100 dark:hover:bg-dark-bg-tertiary rounded-lg text-purple dark:text-dark-text-primary outline-none" />
+                </div>
+            </x-tooltip>
+
             <x-tooltip id="tooltip-new" placement="right" message="{{ trans('general.new') }}">
                 <button type="button" class="add-item menu-button flex items-center justify-center w-8 h-8 mb-2.5 cursor-pointer js-menu-toggles" data-menu="add-new-menu">
                     <span id="menu-neww-icon" name="add_circle_outline" class="material-icons-outlined text-purple text-2xl pointer-events-none">add_circle_outline</span>

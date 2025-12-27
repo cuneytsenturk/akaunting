@@ -149,6 +149,7 @@ return [
     'download_pdf'          => 'Download PDF',
     'customize'             => 'Customize',
     'search'                => 'Search',
+    'theme'                 => 'Theme',
     'search_text'           => 'Search for this text',
     'search_placeholder'    => 'Type to search..',
     'filter'                => 'Filter',
@@ -345,6 +346,17 @@ return [
             'new' =>    'Enter the details and create your first :type',
             'import' => 'Import your existing :type with a single click',
         ],
+    ],
+
+    'themes' => [
+        'light'             => 'Light Mode',
+        'dark'              => 'Dark Mode',
+        'auto'              => 'Auto (System)',
+        'light_description' => 'Bright and clear appearance',
+        'dark_description'  => 'Easy on the eyes in low light',
+        'auto_description'  => 'Matches your device setting',
+        'updated'           => 'Theme updated successfully',
+        'user_preference_disabled' => 'Theme preference is disabled by administrator',
     ],
 
 ];

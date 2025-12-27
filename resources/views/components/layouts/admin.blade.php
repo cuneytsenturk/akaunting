@@ -13,9 +13,9 @@
     </x-layouts.admin.head>
 
     @mobile
-    <body class="bg-body">
+    <body class="bg-body dark:bg-body-dark {{ theme_class() }}">
     @elsemobile
-    <body class="bg-body overflow-y-overlay">
+    <body class="bg-body dark:bg-body-dark overflow-y-overlay {{ theme_class() }}">
     @endmobile
 
         @stack('body_start')

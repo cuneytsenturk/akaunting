@@ -32,6 +32,9 @@ mix
         }
     })
 
+    // Core plugins (loaded on all pages)
+    .js('resources/assets/js/plugins/theme-manager.js', 'public/js/plugins/theme-manager.min.js')
+
     // Auth
     .js('resources/assets/js/views/auth/common.js', 'public/js/auth/common.min.js')
     .js('resources/assets/js/views/auth/users.js', 'public/js/auth/users.min.js')

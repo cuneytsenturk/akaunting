@@ -313,7 +313,8 @@ module.exports = {
                 },
 
                 'body': {
-                    DEFAULT: '#fcfcfc'
+                    DEFAULT: '#fcfcfc',
+                    dark: '#0f172a', // Dark mode background
                 },
 
                 'light-gray': '#C7C9D9',
@@ -331,6 +332,76 @@ module.exports = {
                 'red-light': '#FF6B6B',
 
                 'default': '#6ea152',
+
+                // ============================================
+                // DARK MODE SEMANTIC COLORS
+                // ============================================
+                // These colors provide semantic meaning for dark mode
+                // and ensure proper contrast and readability
+                
+                'dark': {
+                    // Background colors for dark mode
+                    'bg': {
+                        'primary': '#0f172a',      // Main background (slate-900)
+                        'secondary': '#1e293b',    // Secondary bg, cards (slate-800)
+                        'tertiary': '#334155',     // Hover states, borders (slate-700)
+                        'elevated': '#475569',     // Elevated elements (slate-600)
+                    },
+                    
+                    // Text colors for dark mode
+                    'text': {
+                        'primary': '#f1f5f9',      // Main text (slate-100)
+                        'secondary': '#cbd5e1',    // Secondary text (slate-300)
+                        'tertiary': '#94a3b8',     // Muted text (slate-400)
+                        'disabled': '#64748b',     // Disabled text (slate-500)
+                    },
+                    
+                    // Border colors for dark mode
+                    'border': {
+                        'primary': '#334155',      // Main borders (slate-700)
+                        'secondary': '#475569',    // Secondary borders (slate-600)
+                        'focus': '#6366f1',        // Focus states (indigo-500)
+                    },
+                    
+                    // Component specific colors
+                    'input': {
+                        'bg': '#1e293b',           // Input background (slate-800)
+                        'border': '#334155',       // Input border (slate-700)
+                        'focus': '#6366f1',        // Input focus (indigo-500)
+                        'placeholder': '#64748b',  // Placeholder text (slate-500)
+                    },
+                    
+                    // Status colors adapted for dark mode (with better contrast)
+                    'status': {
+                        'success': {
+                            'bg': '#14532d',       // green-900
+                            'text': '#86efac',     // green-300
+                            'border': '#166534',   // green-800
+                        },
+                        'warning': {
+                            'bg': '#451a03',       // amber-900
+                            'text': '#fcd34d',     // amber-300
+                            'border': '#78350f',   // amber-800
+                        },
+                        'danger': {
+                            'bg': '#450a0a',       // red-900
+                            'text': '#fca5a5',     // red-300
+                            'border': '#7f1d1d',   // red-800
+                        },
+                        'info': {
+                            'bg': '#082f49',       // sky-900
+                            'text': '#7dd3fc',     // sky-300
+                            'border': '#0c4a6e',   // sky-800
+                        },
+                    },
+                    
+                    // Overlay colors
+                    'overlay': {
+                        'DEFAULT': 'rgba(0, 0, 0, 0.6)',
+                        'light': 'rgba(0, 0, 0, 0.4)',
+                        'heavy': 'rgba(0, 0, 0, 0.8)',
+                    },
+                },
             },
 
             spacing: {

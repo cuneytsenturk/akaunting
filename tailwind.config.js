@@ -3,6 +3,10 @@ module.exports = {
         require('./presets.js'),
     ],
 
+    // Dark mode strategy: 'class' allows manual toggle via JavaScript
+    // Alternative: 'media' would use system preference automatically
+    darkMode: 'class',
+
     content: [
         './resources/views/**/*.blade.php',
         './resources/views/**/**/*.blade.php',

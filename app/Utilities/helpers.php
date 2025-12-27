@@ -448,3 +448,97 @@ if (! function_exists('calculation_to_quantity')) {
         return $result;
     }
 }
+
+// ============================================
+// DARK MODE / THEME HELPERS
+// ============================================
+
+if (! function_exists('user_theme')) {
+    /**
+     * Get the current user's theme preference.
+     *
+     * @return string Returns 'light', 'dark', or 'auto'
+     */
+    function user_theme(): string
+    {
+        $user = user();
+
+        if (!$user) {
+            return setting('default.theme', 'light');
+        }
+
+        return $user->theme ?? setting('default.theme', 'light');
+    }
+}
+
+if (! function_exists('is_dark_mode')) {
+    /**
+     * Check if dark mode is currently active.
+     * This is a server-side check based on user preference.
+     * For 'auto' mode, actual dark mode detection happens on client-side.
+     *
+     * @return bool
+     */
+    function is_dark_mode(): bool
+    {
+        $theme = user_theme();
+
+        // If theme is explicitly dark, return true
+        if ($theme === 'dark') {
+            return true;
+        }
+
+        // For 'auto', we can't determine server-side, default to false
+        // Client-side JavaScript will handle 'auto' mode properly
+        return false;
+    }
+}
+
+if (! function_exists('theme_class')) {
+    /**
+     * Get the theme class for HTML body element.
+     * Returns 'dark' if dark mode is active, empty string otherwise.
+     *
+     * @return string
+     */
+    function theme_class(): string
+    {
+        $theme = user_theme();
+
+        // Only return 'dark' if explicitly set to dark
+        // For 'auto' mode, JavaScript will add the class dynamically
+        return $theme === 'dark' ? 'dark' : '';
+    }
+}
+
+if (! function_exists('theme_color_scheme')) {
+    /**
+     * Get the color scheme meta tag value based on theme.
+     * Used for browser chrome and mobile UI theming.
+     *
+     * @return string
+     */
+    function theme_color_scheme(): string
+    {
+        $theme = user_theme();
+
+        return match($theme) {
+            'dark' => 'dark',
+            'light' => 'light',
+            'auto' => 'light dark', // Support both
+            default => 'light',
+        };
+    }
+}
+
+if (! function_exists('theme_allows_user_preference')) {
+    /**
+     * Check if system allows users to set their own theme preference.
+     *
+     * @return bool
+     */
+    function theme_allows_user_preference(): bool
+    {
+        return (bool) setting('theme.allow_user_preference', 1);
+    }
+}

@@ -9,6 +9,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8; charset=ISO-8859-1"/>
+    
+    {{-- Theme Configuration Meta Tags --}}
+    <meta name="theme-preference" content="{{ user_theme() }}">
+    <meta name="color-scheme" content="{{ theme_color_scheme() }}">
+    <meta name="theme-color" content="{{ is_dark_mode() ? '#0f172a' : '#fcfcfc' }}">
 
     <title>{!! ! empty($metaTitle) ? $metaTitle : $title !!} - @setting('company.name')</title>
 
@@ -38,6 +43,9 @@
     @stack('stylesheet')
 
     @livewireStyles
+
+    {{-- Theme Manager - Load before other scripts to prevent flash --}}
+    <script src="{{ asset('public/js/plugins/theme-manager.min.js?v=' . version('short')) }}" type="text/javascript"></script>
 
     <script type="text/javascript"><!--
         var url = '{{ url("/" . company_id()) }}';
