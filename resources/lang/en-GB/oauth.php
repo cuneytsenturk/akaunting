@@ -19,6 +19,8 @@ return [
     'requests_access'               => 'is requesting access to your account',
     'will_be_able_to'               => 'This application will be able to',
     'redirect_info'                 => 'You will be redirected to :url',
+    'select_company'                => 'Select Company',
+    'company_selection_info'        => 'The token will be associated with the selected company and can only access data from that company.',
 
     // Client Management
     'client_id'                     => 'Client ID',

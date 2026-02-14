@@ -57,25 +57,49 @@ class Authorize extends Controller
             $client = $clients->find($authRequest->getClient()->getIdentifier());
             $user = $request->user();
 
-            // Check if client belongs to current company
-            if (config('oauth.company_aware', true) && $client->company_id !== company_id()) {
-                abort(403, trans('general.error.not_in_company'));
+            // Get user's companies
+            $companies = $user->companies()->enabled()->get();
+
+            // If company_aware is enabled, filter by client's company
+            if (config('oauth.company_aware', true) && $client->company_id) {
+                $companies = $companies->where('id', $client->company_id);
+                
+                if ($companies->isEmpty()) {
+                    abort(403, trans('general.error.not_in_company'));
+                }
             }
 
-            // Check if client already authorized by this user
+            // Convert companies to select options format
+            $companyOptions = $companies->mapWithKeys(function ($company) {
+                return [$company->id => $company->name];
+            })->toArray();
+
+            // Auto-select if only one company available
+            $selectedCompanyId = null;
+            if (count($companyOptions) === 1) {
+                $selectedCompanyId = array_key_first($companyOptions);
+            }
+
+            // Check if client already authorized by this user for any of their companies
             if ($client->skipsAuthorization() || $this->hasValidToken($tokens, $user, $client, $scopes)) {
+                // If auto-approved, use first available company
+                if ($selectedCompanyId) {
+                    $request->session()->put('oauth.company_id', $selectedCompanyId);
+                }
                 return $this->approveRequest($authRequest, $user);
             }
 
             $request->session()->put('authToken', $token = Str::random());
             $request->session()->put('authRequest', $authRequest);
 
-            return $this->response('auth.oauth.authorize', [
+            return $this->response('oauth.authorize', [
                 'client' => $client,
                 'user' => $user,
                 'scopes' => $scopes,
                 'request' => $request,
                 'authToken' => $token,
+                'companies' => $companyOptions,
+                'selectedCompanyId' => $selectedCompanyId,
             ]);
         } catch (\League\OAuth2\Server\Exception\OAuthServerException $e) {
             return response()->json([
@@ -104,15 +128,39 @@ class Authorize extends Controller
             ], 401);
         }
 
-        $authRequest = $request->session()->get('authRequest');
+        // Validate company selection
+        $request->validate([
+            'company_id' => 'required|integer|exists:companies,id',
+        ]);
+
+        $companyId = $request->input('company_id');
         $user = $request->user();
+
+        // Verify user has access to this company
+        if (!$user->companies()->where('id', $companyId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'error' => true,
+                'message' => trans('general.error.not_in_company'),
+            ], 403);
+        }
+
+        // Store company_id in session for token creation
+        $request->session()->put('oauth.company_id', $companyId);
+
+        $authRequest = $request->session()->get('authRequest');
 
         $authRequest->setUser(new BridgeUser($user->getAuthIdentifier()));
         $authRequest->setAuthorizationApproved(true);
 
-        return $this->convertResponse(
+        $response = $this->convertResponse(
             $this->server->completeAuthorizationRequest($authRequest, new Psr7Response())
         );
+
+        // Clean up session
+        $request->session()->forget('oauth.company_id');
+
+        return $response;
     }
 
     /**
