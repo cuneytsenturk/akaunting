@@ -111,6 +111,12 @@ class Route extends Provider
                 'as'            => 'api.' . $alias . '.',
             ], $attributes));
         });
+
+        Facade::macro('oauth', function ($alias, $routes, $attributes = []) {
+            return Facade::module($alias, $routes, array_merge([
+                'middleware'    => 'oauth',
+            ], $attributes));
+        });
     }
 
     /**
@@ -317,6 +323,10 @@ class Route extends Provider
     {
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(config('app.throttles.api'));
+        });
+
+        RateLimiter::for('oauth', function (Request $request) {
+            return Limit::perMinute(config('app.throttles.oauth'));
         });
 
         RateLimiter::for('import', function (Request $request) {

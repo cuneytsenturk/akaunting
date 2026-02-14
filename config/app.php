@@ -24,6 +24,7 @@ return [
 
     'throttles' => [
         'api' => env('APP_THROTTLES_API', '60'),
+        'oauth' => env('APP_THROTTLES_OAUTH', '60'),
         'import' => env('APP_THROTTLES_IMPORT', '1'),
         'email' => [
             'minute' => env('APP_THROTTLES_EMAIL_MINUTE', '5'),
