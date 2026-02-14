@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\OAuth;
 
-use App\Abstracts\Http\Controller;
-use Illuminate\Http\Request;
 use Laravel\Passport\Http\Controllers\AccessTokenController as PassportAccessTokenController;
 use Psr\Http\Message\ServerRequestInterface;
 
