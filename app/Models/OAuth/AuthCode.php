@@ -65,7 +65,12 @@ class AuthCode extends PassportAuthCode
         // Automatically set company_id when creating
         static::creating(function ($authCode) {
             if (config('oauth.company_aware', true) && empty($authCode->company_id)) {
-                $authCode->company_id = company_id();
+                // Check if company_id is set in OAuth session (during authorization)
+                if (session()->has('oauth.company_id')) {
+                    $authCode->company_id = session('oauth.company_id');
+                } else {
+                    $authCode->company_id = company_id();
+                }
             }
 
             // Set created_from and created_by

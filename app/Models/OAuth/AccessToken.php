@@ -66,7 +66,12 @@ class AccessToken extends PassportToken
         // Automatically set company_id when creating
         static::creating(function ($token) {
             if (config('oauth.company_aware', true) && empty($token->company_id)) {
-                $token->company_id = company_id();
+                // Check if company_id is set in OAuth session (during authorization)
+                if (session()->has('oauth.company_id')) {
+                    $token->company_id = session('oauth.company_id');
+                } else {
+                    $token->company_id = company_id();
+                }
             }
 
             // Set created_from and created_by

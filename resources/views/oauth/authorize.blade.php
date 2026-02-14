@@ -35,6 +35,39 @@
                         </div>
                     </div>
 
+                    <!-- Company Selection -->
+                    @if (count($companies) > 0)
+                        <form id="authorize-form" method="POST" action="{{ route('oauth.authorize.approve') }}">
+                            @csrf
+                            <input type="hidden" name="auth_token" value="{{ $authToken }}">
+
+                            @if (count($companies) > 1)
+                                <div class="mb-6">
+                                    <label for="company_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ trans('oauth.select_company') }}
+                                    </label>
+                                    <select 
+                                        name="company_id" 
+                                        id="company_id" 
+                                        required
+                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+                                    >
+                                        <option value="">{{ trans('general.form.select.field', ['field' => trans_choice('general.companies', 1)]) }}</option>
+                                        @foreach($companies as $companyId => $companyName)
+                                            <option value="{{ $companyId }}" {{ $selectedCompanyId == $companyId ? 'selected' : '' }}>
+                                                {{ $companyName }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        {{ trans('oauth.company_selection_info') }}
+                                    </p>
+                                </div>
+                            @else
+                                <input type="hidden" name="company_id" value="{{ $selectedCompanyId }}">
+                            @endif
+                    @endif
+
                     <!-- Scopes -->
                     @if (count($scopes) > 0)
                         <div class="mb-6">
@@ -54,24 +87,26 @@
 
                     <!-- Actions -->
                     <div class="flex gap-3">
-                        <form method="POST" action="{{ route('oauth.authorize.deny') }}" class="flex-1">
-                            @csrf
-                            @method('DELETE')
-                            
-                            <x-button kind="secondary" class="w-full" override="class">
-                                {{ trans('general.cancel') }}
-                            </x-button>
-                        </form>
+                        <button 
+                            type="button"
+                            onclick="window.history.back()"
+                            class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                        >
+                            {{ trans('general.cancel') }}
+                        </button>
 
-                        <form method="POST" action="{{ route('oauth.authorize.approve') }}" class="flex-1">
-                            @csrf
-                            <input type="hidden" name="auth_token" value="{{ $authToken }}">
-                            
-                            <x-button type="submit" class="w-full">
-                                {{ trans('oauth.authorize') }}
-                            </x-button>
-                        </form>
+                        <button 
+                            type="submit" 
+                            form="authorize-form"
+                            class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                        >
+                            {{ trans('oauth.authorize') }}
+                        </button>
                     </div>
+
+                    @if (count($companies) > 0)
+                        </form>
+                    @endif
 
                     <!-- Client Redirect Info -->
                     <div class="mt-6 pt-6 border-t border-gray-200">
