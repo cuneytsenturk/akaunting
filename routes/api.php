@@ -8,7 +8,18 @@ use Illuminate\Support\Facades\Route;
  * @see \App\Providers\Route::mapApiRoutes
  */
 
+
 Route::group(['as' => 'api.'], function () {
+    Route::middleware('auth:api')->group(function () {  
+        Route::get('/invoices', function () {
+            // invoices-read scope kontrolü
+        })->middleware('scope:invoices-read');
+        
+        Route::post('/invoices', function () {
+            // invoices-write scope kontrolü
+        })->middleware('scope:invoices-write');
+    });
+
     // Ping
     Route::get('ping', 'Common\Ping@pong')->name('ping');
 
