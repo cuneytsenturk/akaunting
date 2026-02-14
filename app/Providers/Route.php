@@ -185,8 +185,8 @@ class Route extends Provider
      */
     protected function mapOAuthRoutes()
     {
-        Facade::prefix('{company_id}')
-            ->middleware('web')
+        Facade::prefix('oauth')
+            ->middleware('oauth')
             ->namespace($this->namespace)
             ->group(base_path('routes/oauth.php'));
     }

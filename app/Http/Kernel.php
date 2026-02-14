@@ -48,9 +48,21 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            'dynamic.api.auth',
+            'auth.basic.once',
             'auth.disabled',
             'throttle:api',
+            'permission:read-api',
+            'company.identify',
+            'bindings',
+            'read.only',
+            'language',
+            'firewall.all',
+        ],
+
+        'oauth' => [
+            'auth.oauth.once',
+            'auth.disabled',
+            'throttle:oauth',
             'permission:read-api',
             'company.identify',
             'bindings',
@@ -170,6 +182,7 @@ class Kernel extends HttpKernel
         // Akaunting
         'api.key' => \App\Http\Middleware\RedirectIfNoApiKey::class,
         'auth.basic.once' => \App\Http\Middleware\AuthenticateOnceWithBasicAuth::class,
+        'auth.oauth.once' => \App\Http\Middleware\AuthenticateOnceWithOAuth::class,
         'auth.disabled' => \App\Http\Middleware\LogoutIfUserDisabled::class,
         'dynamic.api.auth' => \App\Http\Middleware\DynamicApiAuth::class,
         'auth.redirect' => \App\Http\Middleware\RedirectIfAuthenticated::class,

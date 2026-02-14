@@ -96,6 +96,14 @@ class Macro extends ServiceProvider
             return ! $this->isAdmin($company_id);
         });
 
+        Request::macro('isMcp', function () {
+            return $this->is('mpc') || $this->is('mcp/*');
+        });
+
+        Request::macro('isNotMcp', function () {
+            return ! $this->isMcp();
+        });
+
         Request::macro('isCloudHost', function () {
             return $this->getHost() == config('cloud.host', 'app.akaunting.com');
         });
