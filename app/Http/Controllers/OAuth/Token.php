@@ -82,4 +82,143 @@ class Token extends Controller
             'message' => trans('messages.success.deleted', ['type' => trans_choice('general.tokens', 1)]),
         ]);
     }
+
+    /**
+     * Introspect a token (RFC 7662).
+     *
+     * This endpoint allows authorized clients to validate and get information
+     * about access tokens. Used for token validation in microservices.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Laravel\Passport\TokenRepository  $tokens
+     * @return \Illuminate\Http\Response
+     */
+    public function introspect(Request $request, TokenRepository $tokens)
+    {
+        // Validate input
+        $request->validate([
+            'token' => 'required|string',
+            'token_type_hint' => 'sometimes|string|in:access_token,refresh_token',
+        ]);
+
+        $tokenId = $request->input('token');
+
+        try {
+            // Find the token
+            $token = $tokens->find($tokenId);
+
+            // Token not found or revoked
+            if (!$token || $token->revoked) {
+                return response()->json([
+                    'active' => false,
+                ]);
+            }
+
+            // Check if token is expired
+            if ($token->expires_at && $token->expires_at->isPast()) {
+                return response()->json([
+                    'active' => false,
+                ]);
+            }
+
+            // Check company scope if enabled
+            $companyMatch = true;
+            if (config('oauth.company_aware', true)) {
+                $companyMatch = $token->company_id === company_id();
+            }
+
+            if (!$companyMatch) {
+                return response()->json([
+                    'active' => false,
+                ]);
+            }
+
+            // Token is valid and active
+            return response()->json([
+                'active' => true,
+                'scope' => implode(' ', $token->scopes ?? []),
+                'client_id' => $token->client_id,
+                'user_id' => $token->user_id,
+                'company_id' => $token->company_id ?? null,
+                'token_type' => 'Bearer',
+                'exp' => $token->expires_at ? $token->expires_at->timestamp : null,
+                'iat' => $token->created_at ? $token->created_at->timestamp : null,
+                'nbf' => $token->created_at ? $token->created_at->timestamp : null,
+                'sub' => $token->user_id,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'active' => false,
+            ]);
+        }
+    }
+
+    /**
+     * Revoke a token (RFC 7009).
+     *
+     * This endpoint allows clients to revoke access or refresh tokens.
+     * This is the OAuth 2.0 standard token revocation endpoint.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Laravel\Passport\TokenRepository  $tokens
+     * @return \Illuminate\Http\Response
+     */
+    public function revoke(Request $request, TokenRepository $tokens)
+    {
+        // Validate input
+        $request->validate([
+            'token' => 'required|string',
+            'token_type_hint' => 'sometimes|string|in:access_token,refresh_token',
+        ]);
+
+        $tokenId = $request->input('token');
+        $tokenTypeHint = $request->input('token_type_hint', 'access_token');
+
+        try {
+            if ($tokenTypeHint === 'refresh_token') {
+                // Revoke refresh token
+                $refreshToken = \App\Models\OAuth\RefreshToken::find($tokenId);
+                
+                if ($refreshToken) {
+                    // Check company scope if enabled
+                    if (config('oauth.company_aware', true) && $refreshToken->company_id !== company_id()) {
+                        // Return success even if token not found (per RFC 7009)
+                        return response()->json([
+                            'success' => true,
+                        ], 200);
+                    }
+
+                    $refreshToken->revoked = true;
+                    $refreshToken->save();
+                }
+            } else {
+                // Revoke access token
+                $token = $tokens->find($tokenId);
+
+                if ($token) {
+                    // Check company scope if enabled
+                    if (config('oauth.company_aware', true) && $token->company_id !== company_id()) {
+                        // Return success even if token not found (per RFC 7009)
+                        return response()->json([
+                            'success' => true,
+                        ], 200);
+                    }
+
+                    $tokens->revokeAccessToken($tokenId);
+                }
+            }
+
+            // Per RFC 7009, the server responds with HTTP status code 200
+            // regardless of whether the token existed or not
+            return response()->json([
+                'success' => true,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'invalid_request',
+                'error_description' => 'The request is malformed.',
+            ], 400);
+        }
+    }
 }

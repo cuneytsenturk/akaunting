@@ -66,10 +66,28 @@ class AccessToken extends PassportToken
         // Automatically set company_id when creating
         static::creating(function ($token) {
             if (config('oauth.company_aware', true) && empty($token->company_id)) {
-                // Check if company_id is set in OAuth session (during authorization)
-                if (session()->has('oauth.company_id')) {
+                // Priority 1: Get from AuthCode (authorization code flow)
+                // When exchanging authorization code for token, inherit company_id from auth code
+                if ($token->user_id && $token->client_id) {
+                    $authCode = \App\Models\OAuth\AuthCode::withoutGlobalScope('company')
+                        ->where('user_id', $token->user_id)
+                        ->where('client_id', $token->client_id)
+                        ->where('revoked', false)
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                    
+                    if ($authCode && $authCode->company_id) {
+                        $token->company_id = $authCode->company_id;
+                    }
+                }
+                
+                // Priority 2: Get from OAuth session (during authorization - implicit/password grant)
+                if (empty($token->company_id) && session()->has('oauth.company_id')) {
                     $token->company_id = session('oauth.company_id');
-                } else {
+                }
+                
+                // Priority 3: Get from current session (personal access tokens, API calls)
+                if (empty($token->company_id)) {
                     $token->company_id = company_id();
                 }
             }
