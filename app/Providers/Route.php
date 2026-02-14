@@ -126,6 +126,8 @@ class Route extends Provider
 
         $this->mapApiRoutes();
 
+        $this->mapOAuthRoutes();
+
         $this->mapCommonRoutes();
 
         $this->mapGuestRoutes();
@@ -172,6 +174,21 @@ class Route extends Provider
             ->middleware(config('api.middleware'))
             ->namespace($this->namespace . '\Api')
             ->group(base_path('routes/api.php'));
+    }
+
+    /**
+     * Define the "oauth" routes for the application.
+     *
+     * These routes handle OAuth authorization and token management.
+     *
+     * @return void
+     */
+    protected function mapOAuthRoutes()
+    {
+        Facade::prefix('{company_id}')
+            ->middleware('web')
+            ->namespace($this->namespace)
+            ->group(base_path('routes/oauth.php'));
     }
 
     /**

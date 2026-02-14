@@ -193,6 +193,7 @@ return [
         // App\Providers\Broadcast::class,
         App\Providers\Event::class,
         App\Providers\Macro::class,
+        App\Providers\OAuth::class,
         App\Providers\Observer::class,
         App\Providers\Queue::class,
         App\Providers\Route::class,
