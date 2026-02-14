@@ -8,7 +8,13 @@ use Illuminate\Support\Facades\Route;
  * @see \App\Providers\Route::mapOAuthRoutes
  */
 
-Route::group(['as' => 'oauth.', 'prefix' => 'oauth'], function () {
+// OAuth Token Endpoint (stateless, no auth required - handled by Passport)
+Route::post('token', 'OAuth\AccessToken@issueToken')
+    ->name('oauth.token')
+    ->withoutMiddleware('oauth')
+    ->middleware(['throttle:oauth', 'bindings']);
+
+Route::group(['as' => 'oauth.'], function () {
     // Authorization Endpoints
     Route::get('authorize', 'OAuth\Authorize@show')->name('authorize.show');
     Route::post('authorize', 'OAuth\Authorize@approve')->name('authorize.approve');
@@ -34,9 +40,4 @@ Route::group(['as' => 'oauth.', 'prefix' => 'oauth'], function () {
 
     // Scopes (API - read only)
     Route::get('scopes', 'OAuth\Scope@index')->name('scopes.index');
-});
-
-// OAuth Token Endpoint (stateless, no auth required - handled by Passport)
-Route::group(['prefix' => 'oauth'], function () {
-    Route::post('token', 'OAuth\AccessToken@issueToken')->name('oauth.token');
 });
