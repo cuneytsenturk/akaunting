@@ -32,7 +32,7 @@ class Authorize extends Controller
      */
     public function __construct(AuthorizationServer $server)
     {
-        parent::__construct();
+        //parent::__construct();
 
         $this->server = $server;
 

@@ -14,11 +14,19 @@ Route::post('token', 'OAuth\AccessToken@issueToken')
     ->withoutMiddleware('oauth')
     ->middleware(['throttle:oauth', 'bindings']);
 
+// Authorization Endpoints (require auth)
+Route::get('authorize', 'OAuth\Authorize@show')
+    ->name('oauth.authorize.show')
+    ->withoutMiddleware('oauth')
+    ->middleware(['web', 'auth', 'throttle:oauth']);
+
+Route::post('authorize', 'OAuth\Authorize@approve')
+    ->name('oauth.authorize.approve')
+    ->withoutMiddleware('oauth')
+    ->middleware(['web', 'auth', 'throttle:oauth']);
+
 Route::group(['as' => 'oauth.'], function () {
-    // Authorization Endpoints
-    Route::get('authorize', 'OAuth\Authorize@show')->name('authorize.show');
-    Route::post('authorize', 'OAuth\Authorize@approve')->name('authorize.approve');
-    Route::delete('authorize', 'OAuth\Authorize@deny')->name('authorize.deny');
+    // Token Management (User's personal tokens)
 
     // Token Management (User's personal tokens)
     Route::get('tokens', 'OAuth\Token@index')->name('tokens.index');
