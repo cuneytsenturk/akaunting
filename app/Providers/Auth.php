@@ -32,11 +32,25 @@ class Auth extends Provider
 
         // Example scopes for an invoicing application
         Passport::tokensCan([
-            'invoices-read' => 'Faturaları görüntüleme',
-            'invoices-write' => 'Fatura oluşturma/düzenleme',
-            'customers-read' => 'Müşterileri görüntüleme',
-            'customers-write' => 'Müşteri oluşturma/düzenleme',
-            'reports-read' => 'Raporları görüntüleme',
+            'company:read' => 'Şirket bilgilerini görüntüleme',
+            'company:write' => 'Şirket bilgilerini düzenleme',
+            
+            'invoices:read' => 'Faturaları görüntüleme',
+            'invoices:write' => 'Fatura oluşturma/düzenleme',
+            'invoices:delete' => 'Fatura silme',
+            
+            'customers:read' => 'Müşterileri görüntüleme',
+            'customers:write' => 'Müşteri oluşturma/düzenleme',
+            'customers:delete' => 'Müşteri silme',
+            
+            'items:read' => 'Ürünleri görüntüleme',
+            'items:write' => 'Ürün oluşturma/düzenleme',
+            
+            'reports:read' => 'Raporları görüntüleme',
+            'reports:export' => 'Rapor dışa aktarma',
+            
+            'transactions:read' => 'İşlemleri görüntüleme',
+            'transactions:write' => 'İşlem oluşturma',
         ]);
 
         // Set default scopes for clients that don't specify any

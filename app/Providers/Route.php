@@ -302,6 +302,10 @@ class Route extends Provider
             return Limit::perMinute(config('app.throttles.api'));
         });
 
+        RateLimiter::for('oauth', function (Request $request) {
+            return Limit::perMinute(config('app.throttles.oauth'));
+        });
+
         RateLimiter::for('import', function (Request $request) {
             return Limit::perMinute(config('app.throttles.import'));
         });

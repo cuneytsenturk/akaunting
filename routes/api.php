@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::group(['as' => 'api.'], function () {
-    Route::middleware('auth:api')->group(function () {  
+    Route::middleware(['auth:api', 'throttle:oauth'])->group(function () {  
         Route::get('/invoices', function () {
             // invoices-read scope kontrolü
         })->middleware('scope:invoices-read');

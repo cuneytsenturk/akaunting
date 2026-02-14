@@ -367,6 +367,17 @@ class User extends Authenticatable implements HasLocalePreference
         return $this->locale;
     }
 
+    public function createToken($name, array $scopes = [], $companyId = null)
+    {
+        $token = $this->tokens()->create([
+            'name' => $name,
+            'scopes' => $scopes,
+            'company_id' => $companyId, // Custom alan
+        ]);
+
+        return new PersonalAccessTokenResult($token, $token->accessToken);
+    }
+
     /**
      * Get the line actions.
      *
