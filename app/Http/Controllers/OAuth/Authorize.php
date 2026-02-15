@@ -69,10 +69,32 @@ class Authorize extends Controller
                 }
             }
 
-            // Convert companies to select options format
-            $companyOptions = $companies->mapWithKeys(function ($company) {
-                return [$company->id => $company->name];
-            })->toArray();
+            // Convert companies to select options format with logo and details
+            $companyOptions = [];
+            $originalCompany = company();
+            
+            foreach ($companies as $company) {
+                $company->makeCurrent();
+                
+                $logo = null;
+                $logoMedia = $company->getMedia('company.logo')->last();
+                if ($logoMedia) {
+                    $logo = $logoMedia->getUrl();
+                }
+                
+                $companyOptions[$company->id] = [
+                    'id' => $company->id,
+                    'name' => setting('company.name', $company->domain),
+                    'email' => setting('company.email', ''),
+                    'logo' => $logo,
+                    'domain' => $company->domain,
+                ];
+            }
+            
+            // Restore original company
+            if ($originalCompany) {
+                $originalCompany->makeCurrent();
+            }
 
             // Auto-select if only one company available
             $selectedCompanyId = null;
@@ -86,6 +108,7 @@ class Authorize extends Controller
                 if ($selectedCompanyId) {
                     $request->session()->put('oauth.company_id', $selectedCompanyId);
                 }
+
                 return $this->approveRequest($authRequest, $user);
             }
 

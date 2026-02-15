@@ -160,7 +160,13 @@
 
                             <x-slot name="body">
                                 <div class="flex items-center">
-                                    <img src="{{ $client->user->picture }}" alt="{{ $client->user->name }}" class="w-10 h-10 rounded-full">
+                                    @if (setting('default.use_gravatar', '0') == '1')
+                                        <img src="{{ $client->user->picture }}" alt="{{ $client->user->name }}" class="w-10 h-10 rounded-full" title="{{ $client->user->name }}">
+                                    @elseif (is_object($client->user->picture))
+                                        <img src="{{ Storage::url($client->user->picture->id) }}" alt="{{ $client->user->name }}" class="w-10 h-10 rounded-full" title="{{ $client->user->name }}">
+                                    @else
+                                        <img src="{{ asset('public/img/user.svg') }}" alt="{{ $client->user->name }}" class="w-10 h-10 rounded-full" title="{{ $client->user->name }}">
+                                    @endif
                                     <div class="ml-3">
                                         <p class="text-sm font-medium text-gray-900">{{ $client->user->name }}</p>
                                         <p class="text-xs text-gray-500">{{ $client->user->email }}</p>

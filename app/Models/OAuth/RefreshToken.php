@@ -17,6 +17,20 @@ class RefreshToken extends PassportRefreshToken
     protected $table = 'oauth_refresh_tokens';
 
     /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
      * Indicates if the model should use company scope.
      *
      * @var bool
