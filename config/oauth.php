@@ -187,8 +187,6 @@ return [
 
     'default_scope' => env('OAUTH_DEFAULT_SCOPE', 'mcp:use'),
 
-),
-
     /*
     |--------------------------------------------------------------------------
     | Middleware
