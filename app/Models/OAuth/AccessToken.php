@@ -17,27 +17,6 @@ class AccessToken extends PassportToken
     protected $table = 'oauth_access_tokens';
 
     /**
-     * The "type" of the primary key ID.
-     *
-     * @var string
-     */
-    protected $keyType = 'string';
-
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = false;
-
-    /**
-     * The guarded attributes on the model.
-     *
-     * @var array
-     */
-    protected $guarded = [];
-
-    /**
      * Indicates if the model should use company scope.
      *
      * @var bool
@@ -45,21 +24,12 @@ class AccessToken extends PassportToken
     protected $companyAware = true;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable.
+     * Using empty guarded to match Passport's behavior.
      *
      * @var array
      */
-    protected $fillable = [
-        'company_id',
-        'user_id',
-        'client_id',
-        'name',
-        'scopes',
-        'revoked',
-        'expires_at',
-        'created_from',
-        'created_by',
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be cast.

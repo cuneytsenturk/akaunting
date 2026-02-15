@@ -17,20 +17,6 @@ class AuthCode extends PassportAuthCode
     protected $table = 'oauth_auth_codes';
 
     /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = false;
-
-    /**
-     * The "type" of the primary key ID.
-     *
-     * @var string
-     */
-    protected $keyType = 'string';
-
-    /**
      * Indicates if the model should use company scope.
      *
      * @var bool
@@ -38,20 +24,12 @@ class AuthCode extends PassportAuthCode
     protected $companyAware = true;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable.
+     * Using empty guarded to match Passport's behavior.
      *
      * @var array
      */
-    protected $fillable = [
-        'company_id',
-        'user_id',
-        'client_id',
-        'scopes',
-        'revoked',
-        'expires_at',
-        'created_from',
-        'created_by',
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be cast.
