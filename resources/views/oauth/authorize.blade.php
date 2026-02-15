@@ -36,7 +36,7 @@
         </div>
 
         @if (count($companies) > 0)
-            <x-form id="auth" method="POST" route="oauth.authorize.approve">
+            <x-form id="authorize" method="POST" route="oauth.authorize.approve">
                 <input type="hidden" name="auth_token" value="{{ $authToken }}">
 
                 @if (count($companies) > 1)
