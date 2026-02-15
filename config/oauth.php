@@ -185,7 +185,9 @@ return [
     |
     */
 
-    'default_scope' => env('OAUTH_DEFAULT_SCOPE'),
+    'default_scope' => env('OAUTH_DEFAULT_SCOPE', 'mcp:use'),
+
+),
 
     /*
     |--------------------------------------------------------------------------

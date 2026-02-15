@@ -62,6 +62,11 @@ class OAuth extends ServiceProvider
             now()->addMinutes(config('oauth.expiration.personal_access_token', 525600))
         );
 
+        // Set default scope for OAuth tokens
+        if ($defaultScope = config('oauth.default_scope')) {
+            Passport::setDefaultScope($defaultScope);
+        }
+
         // Enable client hashing if configured
         if (config('oauth.hash_client_secrets', false) || config('passport.hash_client_secrets', false)) {
             Passport::hashClientSecrets();
