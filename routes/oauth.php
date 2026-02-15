@@ -45,27 +45,32 @@ Route::get('.well-known/oauth-authorization-server', 'OAuth\Discovery@metadata')
     ->name('oauth.metadata')
     ->withoutMiddleware('oauth');
 
+// Protected Resource Metadata Endpoint (RFC 9728) - MCP REQUIRED
+Route::get('.well-known/oauth-protected-resource', 'OAuth\Discovery@protectedResourceMetadata')
+    ->name('oauth.protected-resource-metadata')
+    ->withoutMiddleware('oauth');
+
 // OpenID Connect Discovery (optional)
 Route::get('.well-known/openid-configuration', 'OAuth\Discovery@openidConfiguration')
     ->name('oauth.openid.configuration')
     ->withoutMiddleware('oauth');
 
-Route::group(['as' => 'oauth.'], function () {
-    // Token Management (User's personal tokens)
+// Dynamic Client Registration (RFC 7591) - MCP REQUIRED
+Route::post('register', 'OAuth\ClientRegistration@register')
+    ->name('oauth.register')
+    ->withoutMiddleware('oauth')
+    ->middleware(['throttle:dcr', 'bindings']);
 
+Route::group(['as' => 'oauth.'], function () {
     // Token Management (User's personal tokens)
     Route::get('tokens', 'OAuth\Token@index')->name('tokens.index');
     Route::delete('tokens/{token_id}', 'OAuth\Token@destroy')->name('tokens.destroy');
 
-    // Client Management
-    Route::get('clients', 'OAuth\Client@index')->name('clients.index');
-    Route::get('clients/create', 'OAuth\Client@create')->name('clients.create');
-    Route::post('clients', 'OAuth\Client@store')->name('clients.store');
-    Route::get('clients/{client}', 'OAuth\Client@show')->name('clients.show');
-    Route::get('clients/{client}/edit', 'OAuth\Client@edit')->name('clients.edit');
-    Route::patch('clients/{client}', 'OAuth\Client@update')->name('clients.update');
-    Route::delete('clients/{client}', 'OAuth\Client@destroy')->name('clients.destroy');
-    Route::post('clients/{client}/secret', 'OAuth\Client@secret')->name('clients.secret');
+    // Client Management (Authorized Applications)
+    Route::get('clients', 'OAuth\Clients@index')->name('clients.index');
+    Route::get('clients/{client}', 'OAuth\Clients@show')->name('clients.show');
+    Route::post('clients/{client}/revoke', 'OAuth\Clients@revoke')->name('clients.revoke');
+    Route::delete('clients/{client}', 'OAuth\Clients@destroy')->name('clients.destroy');
 
     // Personal Access Tokens
     Route::post('personal-access-tokens', 'OAuth\PersonalAccessToken@store')->name('personal.tokens.store');

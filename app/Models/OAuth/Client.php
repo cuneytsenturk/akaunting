@@ -149,4 +149,45 @@ class Client extends PassportClient
 
         return $this->firstParty();
     }
+
+    /**
+     * Determine if this is a public client (no secret).
+     *
+     * MCP SPEC: Public clients MUST use PKCE.
+     *
+     * @return bool
+     */
+    public function isPublicClient(): bool
+    {
+        return empty($this->secret);
+    }
+
+    /**
+     * Determine if this is a confidential client (has secret).
+     *
+     * @return bool
+     */
+    public function isConfidentialClient(): bool
+    {
+        return !$this->isPublicClient();
+    }
+
+    /**
+     * Determine if PKCE is required for this client.
+     *
+     * MCP SPEC: PKCE is required for all public clients.
+     * OAuth 2.1: PKCE is recommended for all clients.
+     *
+     * @return bool
+     */
+    public function requiresPKCE(): bool
+    {
+        // If globally required, all clients must use PKCE
+        if (config('oauth.require_pkce', true)) {
+            return true;
+        }
+
+        // Public clients always require PKCE
+        return $this->isPublicClient();
+    }
 }

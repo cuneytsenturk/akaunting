@@ -57,6 +57,14 @@ class Authorize extends Controller
             $client = $clients->find($authRequest->getClient()->getIdentifier());
             $user = $request->user();
 
+            // MCP REQUIRED: Extract resource parameter (RFC 8707)
+            // This will be used as the token audience
+            $queryParams = $psrRequest->getQueryParams();
+            $resourceIdentifier = $queryParams['resource'] ?? url('/');
+            
+            // Store resource identifier in session for token issuance
+            $request->session()->put('oauth.resource', $resourceIdentifier);
+
             // Get user's companies
             $companies = $user->companies()->enabled()->get();
 

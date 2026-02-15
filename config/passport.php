@@ -177,4 +177,31 @@ return [
         // List of route names to ignore
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | PKCE (Proof Key for Code Exchange)
+    |--------------------------------------------------------------------------
+    |
+    | MCP REQUIRED: Enable PKCE for enhanced security. When enabled, public
+    | clients MUST use PKCE with S256 code challenge method. This is a
+    | requirement for OAuth 2.1 and MCP specification compliance.
+    |
+    | Reference: https://datatracker.ietf.org/doc/html/rfc7636
+    |
+    */
+
+    'require_pkce' => env('PASSPORT_REQUIRE_PKCE', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allow Plain PKCE
+    |--------------------------------------------------------------------------
+    |
+    | MCP REQUIRES S256 only. Set to false to enforce S256 code challenge.
+    | Plain method is considered insecure and should not be used.
+    |
+    */
+
+    'allow_plain_pkce' => env('PASSPORT_ALLOW_PLAIN_PKCE', false),
+
 ];

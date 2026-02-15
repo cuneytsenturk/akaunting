@@ -68,6 +68,7 @@ class Discovery extends Controller
             'token_endpoint_auth_methods_supported' => [
                 'client_secret_basic',
                 'client_secret_post',
+                'none', // MCP REQUIRED: For public clients with PKCE
             ],
 
             // Scopes supported
@@ -79,11 +80,13 @@ class Discovery extends Controller
                 'fragment',
             ],
 
-            // Code challenge methods (PKCE)
+            // Code challenge methods (PKCE) - MCP requires S256
             'code_challenge_methods_supported' => [
-                'S256',
-                'plain',
+                'S256', // Required by MCP spec, plain is insecure
             ],
+
+            // Dynamic Client Registration endpoint (RFC 7591) - recommended for MCP
+            'registration_endpoint' => url("/{$oauthPrefix}/register"),
 
             // Revocation endpoint authentication methods
             'revocation_endpoint_auth_methods_supported' => [
@@ -153,6 +156,71 @@ class Discovery extends Controller
         return response()->json($metadata, 200, [
             'Content-Type' => 'application/json',
             'Cache-Control' => 'public, max-age=3600',
+        ]);
+    }
+
+    /**
+     * Get OAuth 2.0 Protected Resource Metadata (RFC 9728).
+     *
+     * MCP REQUIRED: This endpoint tells MCP clients where to find the
+     * authorization server and what scopes are supported.
+     *
+     * Spec: https://datatracker.ietf.org/doc/html/rfc9728
+     * MCP: https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function protectedResourceMetadata(Request $request)
+    {
+        $baseUrl = url('/');
+        $oauthPrefix = config('oauth.routes.prefix', 'oauth');
+
+        $metadata = [
+            // The canonical resource identifier (MUST match token audience)
+            'resource' => $baseUrl,
+
+            // Authorization server(s) that can issue tokens for this resource
+            // MCP clients will use this to discover the authorization server
+            'authorization_servers' => [$baseUrl],
+
+            // Scopes that can be used with this resource
+            'scopes_supported' => array_keys(config('oauth.scopes', ['mcp:use' => 'MCP Usage'])),
+
+            // Optional: Link to documentation
+            'resource_documentation' => config('app.url') . '/docs/oauth',
+
+            // Optional: Token endpoint auth methods
+            'token_endpoint_auth_methods_supported' => [
+                'client_secret_basic',
+                'client_secret_post',
+                'none', // For public clients (PKCE)
+            ],
+
+            // Optional: How bearer tokens can be sent
+            'bearer_methods_supported' => ['header'],
+
+            // Optional: Token introspection endpoint
+            'introspection_endpoint' => url("/{$oauthPrefix}/token/introspect"),
+
+            // Optional: Token revocation endpoint
+            'revocation_endpoint' => url("/{$oauthPrefix}/token/revoke"),
+
+            // Akaunting specific metadata
+            'resource_name' => config('app.name', 'Akaunting'),
+            'resource_version' => version('short'),
+        ];
+
+        // Add company-aware information if enabled
+        if (config('oauth.company_aware', true)) {
+            $metadata['akaunting_company_aware'] = true;
+            $metadata['akaunting_multi_tenant'] = true;
+        }
+
+        return response()->json($metadata, 200, [
+            'Content-Type' => 'application/json',
+            'Cache-Control' => 'public, max-age=3600',
+            'Access-Control-Allow-Origin' => '*', // Allow CORS for discovery
         ]);
     }
 }

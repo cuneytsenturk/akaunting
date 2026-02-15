@@ -48,6 +48,23 @@ class AuthCode extends PassportAuthCode
     ];
 
     /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'user_id',
+        'client_id',
+        'company_id',
+        'scopes',
+        'audience', // MCP REQUIRED: RFC 8707 Resource Identifier
+        'revoked',
+        'created_from',
+        'created_by',
+        'expires_at',
+    ];
+
+    /**
      * Boot the model.
      */
     public static function boot(): void
@@ -63,6 +80,11 @@ class AuthCode extends PassportAuthCode
                 } else {
                     $authCode->company_id = company_id();
                 }
+            }
+
+            // MCP REQUIRED: Set audience from OAuth session (RFC 8707)
+            if (empty($authCode->audience) && session()->has('oauth.resource')) {
+                $authCode->audience = session('oauth.resource');
             }
 
             // Set created_from and created_by

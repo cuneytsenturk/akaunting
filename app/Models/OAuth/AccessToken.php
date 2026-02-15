@@ -48,6 +48,24 @@ class AccessToken extends PassportToken
     ];
 
     /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'user_id',
+        'client_id',
+        'company_id',
+        'name',
+        'scopes',
+        'audience', // MCP REQUIRED: RFC 8707 Resource Identifier
+        'revoked',
+        'created_from',
+        'created_by',
+        'expires_at',
+    ];
+
+    /**
      * Boot the model.
      */
     public static function boot(): void
@@ -70,6 +88,11 @@ class AccessToken extends PassportToken
                     if ($authCode && $authCode->company_id) {
                         $token->company_id = $authCode->company_id;
                     }
+
+                    // MCP REQUIRED: Inherit audience from AuthCode (RFC 8707)
+                    if ($authCode && $authCode->audience && empty($token->audience)) {
+                        $token->audience = $authCode->audience;
+                    }
                 }
                 
                 // Priority 2: Get from OAuth session (during authorization - implicit/password grant)
@@ -80,6 +103,18 @@ class AccessToken extends PassportToken
                 // Priority 3: Get from current session (personal access tokens, API calls)
                 if (empty($token->company_id)) {
                     $token->company_id = company_id();
+                }
+            }
+
+            // MCP REQUIRED: Set audience from session if not already set
+            if (empty($token->audience)) {
+                if (session()->has('oauth.resource')) {
+                    $token->audience = session('oauth.resource');
+                } elseif (request()->has('resource')) {
+                    $token->audience = request()->input('resource');
+                } else {
+                    // Default to application URL
+                    $token->audience = url('/');
                 }
             }
 

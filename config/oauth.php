@@ -170,7 +170,10 @@ return [
     */
 
     'scopes' => [
-        // Example scopes - customize as needed
+        // MCP Required Scopes
+        'mcp:use' => 'Access MCP server capabilities and tools',
+        
+        // Standard API Scopes
         'read' => 'Read access to your data',
         'write' => 'Write access to your data',
         'admin' => 'Full administrative access',
@@ -211,6 +214,104 @@ return [
     |
     */
 
-    'hash_client_secrets' => env('OAUTH_HASH_CLIENT_SECRETS', false),
+    'hash_client_secrets' => env('OAUTH_HASH_CLIENT_SECRETS', true), // Default true for security
+
+    /*
+    |--------------------------------------------------------------------------
+    | Require PKCE (Proof Key for Code Exchange)
+    |--------------------------------------------------------------------------
+    |
+    | MCP REQUIRED: When enabled, all public clients MUST use PKCE with
+    | S256 code challenge method. This is mandatory for OAuth 2.1 and
+    | MCP specification compliance.
+    |
+    | Reference:
+    | - RFC 7636: https://datatracker.ietf.org/doc/html/rfc7636
+    | - MCP Spec: https://modelcontextprotocol.io/specification/2025-06-18
+    |
+    */
+
+    'require_pkce' => env('OAUTH_REQUIRE_PKCE', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed PKCE Methods
+    |--------------------------------------------------------------------------
+    |
+    | MCP REQUIRES S256 only. Plain method is insecure and deprecated.
+    | Do not add 'plain' to this array for production use.
+    |
+    */
+
+    'pkce_methods' => [
+        'S256', // SHA-256 hashing (required by MCP)
+        // 'plain', // NOT RECOMMENDED - insecure
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Require Audience Validation
+    |--------------------------------------------------------------------------
+    |
+    | MCP REQUIRED: When enabled, all access tokens MUST have an audience
+    | claim. Tokens without audience will be rejected. This is a critical
+    | security feature to prevent confused deputy attacks.
+    |
+    | Set to false for backward compatibility with existing tokens.
+    |
+    */
+
+    'require_audience' => env('OAUTH_REQUIRE_AUDIENCE', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Accepted Audiences
+    |--------------------------------------------------------------------------
+    |
+    | Additional audience values that this server will accept. By default,
+    | only the application's base URL is accepted. Add other URLs here if
+    | your server should accept tokens issued for multiple resources.
+    |
+    | Example: ['https://api.example.com', 'https://app.example.com']
+    |
+    */
+
+    'accepted_audiences' => [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dynamic Client Registration (DCR)
+    |--------------------------------------------------------------------------
+    |
+    | MCP REQUIRED: Configuration for RFC 7591 Dynamic Client Registration.
+    | This allows MCP clients like ChatGPT to automatically register
+    | themselves without manual intervention.
+    |
+    */
+
+    'dcr' => [
+        // Enable client update/delete via registration_access_token
+        'enable_management' => env('OAUTH_DCR_ENABLE_MANAGEMENT', false),
+
+        // Allowed redirect URI domains (empty = allow all HTTPS)
+        // For ChatGPT/OpenAI:
+        'allowed_domains' => [
+            'chatgpt.com',
+            'platform.openai.com',
+            'localhost', // Development
+        ],
+
+        // ChatGPT specific redirect URIs (auto-whitelisted)
+        'chatgpt_redirect_uris' => [
+            'https://chatgpt.com/connector_platform_oauth_redirect', // Production
+            'https://platform.openai.com/apps-manage/oauth', // Review
+        ],
+
+        // Maximum clients per IP (rate limiting)
+        'max_clients_per_ip' => env('OAUTH_DCR_MAX_PER_IP', 10),
+
+        // Client expiration (days, 0 = never)
+        'client_expiration_days' => env('OAUTH_DCR_EXPIRATION_DAYS', 90),
+    ],
 
 ];

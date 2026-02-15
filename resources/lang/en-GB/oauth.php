@@ -72,6 +72,47 @@ return [
     // Owner
     'owner'                         => 'Owner',
 
+    // Authorized Applications
+    'authorized_applications'       => 'Authorized Applications',
+    'authorized_applications_description' => 'Manage third-party applications that have access to your account.',
+    'no_authorized_applications'    => 'No Authorized Applications',
+    'no_authorized_applications_description' => 'You haven\'t authorized any third-party applications yet.',
+    'dynamic_client'                => 'Dynamic Client',
+    'first_party'                   => 'First Party',
+    'active_tokens_count'           => '{1} :count active token|[2,*] :count active tokens',
+    'no_active_tokens'              => 'No active tokens',
+    'manage_tokens'                 => 'Manage Tokens',
+    'last_used'                     => 'Last used',
+    'revoke_access'                 => 'Revoke Access',
+    'confirm_revoke_all'            => 'Are you sure you want to revoke all tokens for this application?',
+    'confirm_delete_client'         => 'Are you sure you want to delete this client?',
+    'client_deleted'                => 'Client ":name" has been deleted.',
+    'access_revoked'                => 'Access revoked for ":name" (:count tokens).',
+    'security_notice'               => 'Security Notice',
+    'security_notice_description'   => 'Review and manage applications that have access to your account. You can revoke access at any time.',
+    'can_revoke_access'             => 'You can revoke access to this application at any time from your account settings.',
+    'application_details'           => 'Application Details',
+    'website'                       => 'Website',
+    'privacy_policy'                => 'Privacy Policy',
+    'view_privacy_policy'           => 'View Privacy Policy',
+    'terms_of_service'              => 'Terms of Service',
+    'view_terms'                    => 'View Terms',
+    'confirm_deny'                  => 'Are you sure you want to deny this authorization request?',
+    'authorize_prompt'              => 'Authorize :app_name?',
+    'authorize_description'         => 'Logged in as :user',
+    'permissions_requested'         => 'Permissions Requested',
+    'deny'                          => 'Deny',
+
+    // Scopes
+    'scopes.mcp:use.name'           => 'MCP Access',
+    'scopes.mcp:use.description'    => 'Access MCP server capabilities and interact with your data via Model Context Protocol',
+    'scopes.read.name'              => 'Read Access',
+    'scopes.read.description'       => 'Read your account data',
+    'scopes.write.name'             => 'Write Access',
+    'scopes.write.description'      => 'Create and modify your account data',
+    'scopes.admin.name'             => 'Admin Access',
+    'scopes.admin.description'      => 'Full administrative access to your account',
+
     // Messages
     'no_personal_access_client'     => 'No personal access client found. Please run passport:client --personal command first.',
 

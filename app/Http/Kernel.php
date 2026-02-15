@@ -57,6 +57,8 @@ class Kernel extends HttpKernel
             'read.only',
             'language',
             'firewall.all',
+            'oauth.www.authenticate', // MCP REQUIRED: Add WWW-Authenticate header to 401 responses
+            'oauth.validate.audience', // MCP REQUIRED: Validate token audience when OAuth is used
         ],
 
         'oauth' => [
@@ -69,6 +71,8 @@ class Kernel extends HttpKernel
             'read.only',
             'language',
             'firewall.all',
+            'oauth.www.authenticate', // MCP REQUIRED: Add WWW-Authenticate header to 401 responses
+            'oauth.validate.audience', // MCP REQUIRED: Validate token audience (RFC 8707)
         ],
 
         'common' => [
@@ -186,6 +190,8 @@ class Kernel extends HttpKernel
         'auth.disabled' => \App\Http\Middleware\LogoutIfUserDisabled::class,
         'dynamic.api.auth' => \App\Http\Middleware\DynamicApiAuth::class,
         'auth.redirect' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'oauth.www.authenticate' => \App\Http\Middleware\AddOAuthWWWAuthenticateHeader::class,
+        'oauth.validate.audience' => \App\Http\Middleware\ValidateTokenAudience::class,
         'company.identify' => \App\Http\Middleware\IdentifyCompany::class,
         'dropzone' => \App\Http\Middleware\Dropzone::class,
         'header.x' => \App\Http\Middleware\AddXHeader::class,

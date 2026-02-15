@@ -45,6 +45,21 @@ class RefreshToken extends PassportRefreshToken
     ];
 
     /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'access_token_id',
+        'company_id',
+        'audience', // MCP REQUIRED: RFC 8707 Resource Identifier (inherited from access token)
+        'revoked',
+        'created_from',
+        'created_by',
+        'expires_at',
+    ];
+
+    /**
      * Boot the model.
      */
     public static function boot(): void
@@ -60,6 +75,11 @@ class RefreshToken extends PassportRefreshToken
                 } else {
                     $token->company_id = company_id();
                 }
+            }
+
+            // MCP REQUIRED: Inherit audience from access token (RFC 8707)
+            if (empty($token->audience) && $token->accessToken) {
+                $token->audience = $token->accessToken->audience;
             }
 
             // Set created_from and created_by
