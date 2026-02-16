@@ -62,6 +62,12 @@ class OAuth extends ServiceProvider
             now()->addMinutes(config('oauth.expiration.personal_access_token', 525600))
         );
 
+        // Register OAuth scopes
+        $scopes = config('oauth.scopes', []);
+        if (!empty($scopes)) {
+            Passport::tokensCan($scopes);
+        }
+
         // Set default scope for OAuth tokens
         if ($defaultScope = config('oauth.default_scope')) {
             Passport::setDefaultScope($defaultScope);
