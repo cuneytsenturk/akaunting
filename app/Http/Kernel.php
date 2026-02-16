@@ -57,8 +57,8 @@ class Kernel extends HttpKernel
             'read.only',
             'language',
             'firewall.all',
-            'oauth.www.authenticate', // MCP REQUIRED: Add WWW-Authenticate header to 401 responses
-            'oauth.validate.audience', // MCP REQUIRED: Validate token audience when OAuth is used
+            //'oauth.www.authenticate', // MCP REQUIRED: Add WWW-Authenticate header to 401 responses
+            //'oauth.validate.audience', // MCP REQUIRED: Validate token audience when OAuth is used
         ],
 
         'oauth' => [

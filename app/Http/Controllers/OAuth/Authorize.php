@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OAuth;
 
 use App\Abstracts\Http\Controller;
+use App\Http\Requests\OAuth\AuthorizeRequest;
 use App\Models\OAuth\Client;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -144,10 +145,10 @@ class Authorize extends Controller
     /**
      * Approve the authorization request.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\OAuth\AuthorizeRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function approve(Request $request)
+    public function approve(AuthorizeRequest $request)
     {
         $authToken = $request->session()->get('authToken');
 
@@ -159,22 +160,9 @@ class Authorize extends Controller
             ], 401);
         }
 
-        // Validate company selection
-        $request->validate([
-            'company_id' => 'required|integer|exists:companies,id',
-        ]);
-
+        // Validation handled by AuthorizeRequest
         $companyId = $request->input('company_id');
         $user = $request->user();
-
-        // Verify user has access to this company
-        if (!$user->companies()->where('id', $companyId)->exists()) {
-            return response()->json([
-                'success' => false,
-                'error' => true,
-                'message' => trans('general.error.not_in_company'),
-            ], 403);
-        }
 
         // Store company_id in session for token creation
         $request->session()->put('oauth.company_id', $companyId);

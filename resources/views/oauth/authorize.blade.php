@@ -36,7 +36,8 @@
         </div>
 
         @if (count($companies) > 0)
-            <x-form id="authorize" method="POST" route="oauth.authorize.approve">
+            <form id="authorize" method="POST" action="{{ route('oauth.authorize.approve') }}">
+                @csrf
                 <input type="hidden" name="auth_token" value="{{ $authToken }}">
 
                 @if (count($companies) > 1)
@@ -181,25 +182,22 @@
                         {{ trans('general.cancel') }}
                     </button>
 
-                    <x-button
+                    <button
                         type="submit"
-                        ::disabled="form.loading"
-                        class="relative flex-1 inline-flex items-center justify-center bg-green hover:bg-green-700 text-white px-6 py-1.5 text-base rounded-lg disabled:bg-green-100 sm:col-span-6"
-                        override="class"
+                        class="relative flex-1 inline-flex items-center justify-center bg-green hover:bg-green-700 text-white px-6 py-1.5 text-base rounded-lg disabled:bg-green-100 sm:col-span-6 transition-colors"
+                        id="authorize-button"
                     >
-                        <x-button.loading>
-                            {{ trans('oauth.authorize') }}
-                        </x-button.loading>
-                    </x-button>
+                        {{ trans('oauth.authorize') }}
+                    </button>
                 </div>
 
                 <!-- Client Redirect Info -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="mt-6 pt-6 border-t border-gray-200 hidden">
                     <p class="text-xs text-gray-500 text-center">
                         {{ trans('oauth.redirect_info', ['url' => $client->redirect]) }}
                     </p>
                 </div>
-            </x-form>
+            </form>
         @endif
     </x-slot>
 

@@ -21,6 +21,7 @@ return [
     'redirect_info'                 => 'You will be redirected to :url',
     'select_company'                => 'Select Company',
     'company_selection_info'        => 'The token will be associated with the selected company and can only access data from that company.',
+    'company_selection_required'    => 'Please select a company to continue authorization.',
 
     // Client Management
     'client_id'                     => 'Client ID',
@@ -30,6 +31,9 @@ return [
     'client_information_description' => 'Enter the basic information for your OAuth client application.',
     'client_name_placeholder'       => 'My Application',
     'redirect_url'                  => 'Redirect URL',
+    'redirect_urls'                 => 'Redirect URLs',
+    'redirect_urls_help'            => 'Enter one or more redirect URLs (one per line, comma-separated, or JSON array)',
+    'invalid_redirect_urls'         => 'Please provide at least one valid redirect URL',
     'client_details'                => 'Client Details',
     'client_created'                => 'Client Created Successfully',
     'credentials_warning'           => 'Make sure to copy your client credentials now. You won\'t be able to see them again!',

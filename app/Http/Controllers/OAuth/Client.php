@@ -65,9 +65,23 @@ class Client extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:191',
-            'redirect' => 'required|url',
+            'redirect' => 'required|string',
             'confidential' => 'boolean',
         ]);
+
+        // Support multiple redirect URLs (comma-separated or JSON array)
+        $redirectUrls = $this->parseRedirectUrls($validated['redirect']);
+        
+        if (empty($redirectUrls)) {
+            return response()->json([
+                'success' => false,
+                'error' => true,
+                'message' => trans('oauth.invalid_redirect_urls'),
+            ], 422);
+        }
+        
+        // Store as JSON array for multiple URLs or single URL
+        $validated['redirect'] = count($redirectUrls) > 1 ? json_encode($redirectUrls) : $redirectUrls[0];
 
         $client = $clients->create(
             user_id(),
@@ -143,8 +157,22 @@ class Client extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:191',
-            'redirect' => 'required|url',
+            'redirect' => 'required|string',
         ]);
+
+        // Support multiple redirect URLs (comma-separated or JSON array)
+        $redirectUrls = $this->parseRedirectUrls($validated['redirect']);
+        
+        if (empty($redirectUrls)) {
+            return response()->json([
+                'success' => false,
+                'error' => true,
+                'message' => trans('oauth.invalid_redirect_urls'),
+            ], 422);
+        }
+        
+        // Store as JSON array for multiple URLs or single URL
+        $validated['redirect'] = count($redirectUrls) > 1 ? json_encode($redirectUrls) : $redirectUrls[0];
 
         $client = ClientModel::findOrFail($client_id);
 
@@ -208,5 +236,37 @@ class Client extends Controller
                 'secret' => $plainSecret,
             ],
         ]);
+    }
+
+    /**
+     * Parse and validate redirect URLs from input.
+     * Supports comma-separated URLs or JSON array.
+     *
+     * @param  string  $input
+     * @return array
+     */
+    protected function parseRedirectUrls(string $input): array
+    {
+        $urls = [];
+        
+        // Try to decode as JSON first
+        $decoded = json_decode($input, true);
+        if (is_array($decoded)) {
+            $urls = $decoded;
+        } else {
+            // Split by comma, newline, or space
+            $urls = preg_split('/[\s,\n\r]+/', $input, -1, PREG_SPLIT_NO_EMPTY);
+        }
+        
+        // Validate each URL
+        $validUrls = [];
+        foreach ($urls as $url) {
+            $url = trim($url);
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
+                $validUrls[] = $url;
+            }
+        }
+        
+        return $validUrls;
     }
 }

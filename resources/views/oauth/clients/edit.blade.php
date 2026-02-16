@@ -20,12 +20,31 @@
                             form-group-class="sm:col-span-6"
                         />
 
-                        <x-form.group.text 
-                            name="redirect" 
-                            label="{{ trans('oauth.redirect_url') }}" 
-                            placeholder="https://example.com/callback"
-                            form-group-class="sm:col-span-6"
-                        />
+                        @php
+                            // Parse redirect URLs for display
+                            $redirectDisplay = $client->redirect;
+                            $decoded = json_decode($client->redirect, true);
+                            if (is_array($decoded)) {
+                                $redirectDisplay = implode("\n", $decoded);
+                            }
+                        @endphp
+
+                        <div class="sm:col-span-6">
+                            <label for="redirect" class="block text-sm font-medium text-gray-700 mb-1">
+                                {{ trans('oauth.redirect_urls') }}
+                            </label>
+                            <textarea 
+                                name="redirect" 
+                                id="redirect"
+                                rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                                placeholder="https://example.com/callback&#10;https://app2.com/oauth/callback&#10;https://app3.com/auth/redirect"
+                                required
+                            >{{ $redirectDisplay }}</textarea>
+                            <p class="mt-1 text-xs text-gray-500">
+                                {{ trans('oauth.redirect_urls_help') }}
+                            </p>
+                        </div>
 
                         <div class="sm:col-span-6">
                             <label class="block text-sm font-medium text-gray-700 mb-2">

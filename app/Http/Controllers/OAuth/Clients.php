@@ -12,7 +12,9 @@ class Clients extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:read-auth-profile')->only('index', 'show');
+        $this->middleware('permission:read-oauth-clients|read-auth-profile')->only('index', 'show');
+        $this->middleware('permission:update-oauth-clients|update-auth-profile')->only('revoke');
+        $this->middleware('permission:delete-oauth-clients|delete-auth-profile')->only('destroy');
     }
 
     /**

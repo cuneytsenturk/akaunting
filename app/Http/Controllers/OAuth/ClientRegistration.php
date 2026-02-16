@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OAuth;
 
 use App\Abstracts\Http\Controller;
+use App\Http\Requests\OAuth\ClientRegistration as ClientRegistrationRequest;
 use App\Models\OAuth\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -29,14 +30,14 @@ class ClientRegistration extends Controller
      *
      * Reference: https://datatracker.ietf.org/doc/html/rfc7591
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\OAuth\ClientRegistration  $request
      * @return \Illuminate\Http\Response
      */
-    public function register(Request $request)
+    public function register(ClientRegistrationRequest $request)
     {
         try {
-            // Validate registration request
-            $validated = $this->validateRegistrationRequest($request);
+            // Validation handled by ClientRegistrationRequest
+            $validated = $request->validated();
 
             // Create the client
             $client = $this->createClient($validated);
@@ -60,47 +61,6 @@ class ClientRegistration extends Controller
                 'error_description' => 'An error occurred during client registration',
             ], 500);
         }
-    }
-
-    /**
-     * Validate the client registration request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    protected function validateRegistrationRequest(Request $request): array
-    {
-        // Base validation rules
-        $rules = [
-            'client_name' => 'sometimes|string|max:255',
-            'redirect_uris' => 'required|array|min:1|max:10',
-            'redirect_uris.*' => ['required', 'string', 'max:500', function ($attribute, $value, $fail) {
-                if (!$this->isValidRedirectUri($value)) {
-                    $fail('The redirect URI must be a valid HTTPS URL or localhost.');
-                }
-            }],
-            'grant_types' => 'sometimes|array',
-            'grant_types.*' => 'in:authorization_code,refresh_token,client_credentials',
-            'response_types' => 'sometimes|array',
-            'response_types.*' => 'in:code,token',
-            'token_endpoint_auth_method' => 'sometimes|in:client_secret_basic,client_secret_post,none',
-            'scope' => 'sometimes|string|max:500',
-            'client_uri' => 'sometimes|url|max:500',
-            'logo_uri' => 'sometimes|url|max:500',
-            'contacts' => 'sometimes|array|max:5',
-            'contacts.*' => 'email|max:255',
-        ];
-
-        $validated = $request->validate($rules);
-
-        // Set defaults
-        $validated['client_name'] = $validated['client_name'] ?? 'OAuth Client';
-        $validated['grant_types'] = $validated['grant_types'] ?? ['authorization_code', 'refresh_token'];
-        $validated['response_types'] = $validated['response_types'] ?? ['code'];
-        $validated['token_endpoint_auth_method'] = $validated['token_endpoint_auth_method'] ?? 'none';
-
-        return $validated;
     }
 
     /**
