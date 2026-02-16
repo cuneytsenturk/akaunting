@@ -17,17 +17,17 @@ use Illuminate\Support\Facades\Route;
 Route::get('.well-known/ai-plugin.json', function () {
     return response()->json([
         'schema_version' => 'v1',
-        'name_for_human' => 'Akaunting',
+        'name_for_human' => 'Akaunting Accounting',
         'name_for_model' => 'akaunting',
-        'description_for_human' => 'Free accounting software for invoices, expenses, and financial reporting for small businesses.',
+        'description_for_human' => 'Free accounting software for invoices, expenses, and financial reporting.',
         'description_for_model' => 'Akaunting is a free, open-source online accounting software designed for small businesses and freelancers. You can access invoices, expenses, customers, vendors, and financial reports through the API. Use this to help users manage their accounting data, create invoices, track expenses, and generate financial reports.',
         'auth' => [
             'type' => 'oauth',
-            'client_url' => url('/oauth/authorize'),
-            'scope' => 'mcp:use',
-            'authorization_url' => url('/oauth/token'),
+            'authorization_url' => url('/oauth/authorize'),
             'authorization_content_type' => 'application/x-www-form-urlencoded',
-            'verification_tokens' => new \stdClass(),
+            'client_url' => url('/oauth/token'),
+            'scope' => 'mcp:use read write',
+            'verification_tokens' => (object)[],
         ],
         'api' => [
             'type' => 'openapi',
