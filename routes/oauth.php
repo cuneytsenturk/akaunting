@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 // OAuth Token Endpoint (stateless, no auth required - handled by Passport)
 Route::post('token', 'OAuth\AccessToken@issueToken')
-    ->name('oauth.token')
+    ->name('passport.token')
     ->withoutMiddleware('oauth')
     ->middleware(['throttle:oauth', 'bindings']);
 
@@ -26,17 +26,17 @@ Route::post('token/revoke', 'OAuth\Token@revoke')
 
 // Authorization Endpoints (require auth)
 Route::get('authorize', 'OAuth\Authorize@show')
-    ->name('oauth.authorize.show')
+    ->name('passport.authorizations.authorize')
     ->withoutMiddleware('oauth')
     ->middleware(['web', 'auth', 'throttle:oauth']);
 
 Route::post('authorize', 'OAuth\Authorize@approve')
-    ->name('oauth.authorize.approve')
+    ->name('passport.authorizations.approve')
     ->withoutMiddleware('oauth')
     ->middleware(['web', 'auth', 'throttle:oauth']);
 
 Route::delete('authorize', 'OAuth\Authorize@deny')
-    ->name('oauth.authorize.deny')
+    ->name('passport.authorizations.deny')
     ->withoutMiddleware('oauth')
     ->middleware(['web', 'auth', 'throttle:oauth']);
 
@@ -61,12 +61,20 @@ Route::post('register', 'OAuth\ClientRegistration@register')
     ->withoutMiddleware('oauth')
     ->middleware(['throttle:dcr', 'bindings']);
 
-Route::group(['as' => 'oauth.'], function () {
+Route::group(['as' => 'passport.'], function () {
     // Token Management (User's personal tokens)
     Route::get('tokens', 'OAuth\Token@index')->name('tokens.index');
     Route::delete('tokens/{token_id}', 'OAuth\Token@destroy')->name('tokens.destroy');
 
-    // Client Management (Authorized Applications)
+    // Client Management - Admin (CRUD)
+    Route::get('clients/create', 'OAuth\Client@create')->name('clients.create');
+    Route::post('clients', 'OAuth\Client@store')->name('clients.store');
+    Route::get('clients/{client}/edit', 'OAuth\Client@edit')->name('clients.edit');
+    Route::put('clients/{client}', 'OAuth\Client@update')->name('clients.update');
+    Route::patch('clients/{client}', 'OAuth\Client@update');
+    Route::post('clients/{client}/secret', 'OAuth\Client@secret')->name('clients.secret');
+
+    // Client Management - User (Authorized Applications)
     Route::get('clients', 'OAuth\Clients@index')->name('clients.index');
     Route::get('clients/{client}', 'OAuth\Clients@show')->name('clients.show');
     Route::post('clients/{client}/revoke', 'OAuth\Clients@revoke')->name('clients.revoke');
