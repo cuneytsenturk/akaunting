@@ -7,8 +7,12 @@ use App\Models\OAuth\AuthCode;
 use App\Models\OAuth\Client;
 use App\Models\OAuth\PersonalAccessClient;
 use App\Models\OAuth\RefreshToken;
+use App\Repositories\OAuth\RefreshTokenRepository;
+use App\Repositories\OAuth\TokenRepository;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
+use Laravel\Passport\RefreshTokenRepository as PassportRefreshTokenRepository;
+use Laravel\Passport\TokenRepository as PassportTokenRepository;
 
 class OAuth extends ServiceProvider
 {
@@ -19,7 +23,22 @@ class OAuth extends ServiceProvider
      */
     public function register()
     {
-        //
+        // Replace Passport's default RefreshTokenRepository with our company-scope-aware
+        // version so that token lookups during the /oauth/token endpoint are never
+        // inadvertently filtered by the current company context.
+        $this->app->bind(
+            PassportRefreshTokenRepository::class,
+            RefreshTokenRepository::class
+        );
+
+        // Replace Passport's default TokenRepository for the same reason: the custom
+        // AccessToken model carries a global "company" scope, so bearer-token validation
+        // on any protected endpoint (e.g. /mcp) must bypass that scope when calling
+        // isAccessTokenRevoked().
+        $this->app->bind(
+            PassportTokenRepository::class,
+            TokenRepository::class
+        );
     }
 
     /**

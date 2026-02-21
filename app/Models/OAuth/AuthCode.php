@@ -53,6 +53,7 @@ class AuthCode extends PassportAuthCode
      * @var array
      */
     protected $fillable = [
+        'id', // Must be explicitly fillable: $guarded=[] + non-empty $fillable still strips unlisted keys
         'user_id',
         'client_id',
         'company_id',

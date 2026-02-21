@@ -50,6 +50,7 @@ class RefreshToken extends PassportRefreshToken
      * @var array
      */
     protected $fillable = [
+        'id', // Must be explicitly fillable: $guarded=[] + non-empty $fillable still strips unlisted keys
         'access_token_id',
         'company_id',
         'audience', // MCP REQUIRED: RFC 8707 Resource Identifier (inherited from access token)

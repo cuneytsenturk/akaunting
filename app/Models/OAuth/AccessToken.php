@@ -53,6 +53,7 @@ class AccessToken extends PassportToken
      * @var array
      */
     protected $fillable = [
+        'id', // Must be explicitly fillable: $guarded=[] + non-empty $fillable still strips unlisted keys
         'user_id',
         'client_id',
         'company_id',
@@ -84,7 +85,7 @@ class AccessToken extends PassportToken
                         ->where('revoked', false)
                         ->orderBy('created_at', 'desc')
                         ->first();
-                    
+
                     if ($authCode && $authCode->company_id) {
                         $token->company_id = $authCode->company_id;
                     }
@@ -94,12 +95,12 @@ class AccessToken extends PassportToken
                         $token->audience = $authCode->audience;
                     }
                 }
-                
+
                 // Priority 2: Get from OAuth session (during authorization - implicit/password grant)
                 if (empty($token->company_id) && session()->has('oauth.company_id')) {
                     $token->company_id = session('oauth.company_id');
                 }
-                
+
                 // Priority 3: Get from current session (personal access tokens, API calls)
                 if (empty($token->company_id)) {
                     $token->company_id = company_id();
