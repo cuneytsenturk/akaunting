@@ -11,14 +11,14 @@
     "version": "1.0.0"
   },
   "oauth": {
-    "authorization_endpoint": "http://localhost/Ak-Dev/oauth4/oauth/authorize",
-    "token_endpoint": "http://localhost/Ak-Dev/oauth4/oauth/token",
+    "authorization_endpoint": "https://app.akaunting.com/oauth/authorize",
+    "token_endpoint": "https://app.akaunting.com/oauth/token",
     "scopes": ["mcp:use", "read", "write"],
     "pkce_required": true,
     "grant_types": ["authorization_code", "refresh_token"]
   },
   "discovery": {
-    "oauth_server": "http://localhost/Ak-Dev/oauth4/oauth/.well-known/oauth-authorization-server",
-    "protected_resource": "http://localhost/Ak-Dev/oauth4/oauth/.well-known/oauth-protected-resource"
+    "oauth_server": "https://app.akaunting.com/oauth/.well-known/oauth-authorization-server",
+    "protected_resource": "https://app.akaunting.com/oauth/.well-known/oauth-protected-resource"
   }
 }

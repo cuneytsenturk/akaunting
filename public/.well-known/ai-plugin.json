@@ -6,18 +6,18 @@
   "description_for_model": "Akaunting is a free, open-source online accounting software designed for small businesses and freelancers. You can access invoices, expenses, customers, vendors, and financial reports through the API. Use this to help users manage their accounting data, create invoices, track expenses, and generate financial reports.",
   "auth": {
     "type": "oauth",
-    "client_url": "http://localhost/Ak-Dev/oauth4/oauth/authorize",
+    "client_url": "https://app.akaunting.com/oauth/authorize",
     "scope": "mcp:use",
-    "authorization_url": "http://localhost/Ak-Dev/oauth4/oauth/token",
+    "authorization_url": "https://app.akaunting.com/oauth/token",
     "authorization_content_type": "application/x-www-form-urlencoded",
     "verification_tokens": {}
   },
   "api": {
     "type": "openapi",
-    "url": "http://localhost/Ak-Dev/oauth4/api/documentation",
+    "url": "https://app.akaunting.com/api/documentation",
     "is_user_authenticated": false
   },
-  "logo_url": "http://localhost/Ak-Dev/oauth4/public/img/akaunting-logo-green.svg",
+  "logo_url": "https://app.akaunting.com/public/img/akaunting-logo-green.svg",
   "contact_email": "support@akaunting.com",
-  "legal_info_url": "http://localhost/Ak-Dev/oauth4/LICENSE.txt"
+  "legal_info_url": "https://app.akaunting.com/LICENSE.txt"
 }

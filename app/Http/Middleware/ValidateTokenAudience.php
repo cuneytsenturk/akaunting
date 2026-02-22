@@ -85,26 +85,74 @@ class ValidateTokenAudience
     /**
      * Get the access token from the request.
      *
+     * Uses Passport's built-in token resolution mechanism.
+     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Laravel\Passport\Token|null
      */
     protected function getAccessToken(Request $request): ?Token
     {
-        // Get token from Authorization header
-        $bearerToken = $request->bearerToken();
+        // Get authenticated user via Passport guard
+        $user = $request->user('passport');
         
-        if (!$bearerToken) {
+        if (!$user) {
             return null;
         }
 
-        // Find the token in database by ID (bearer token is the token ID)
+        // Passport automatically resolves the token when authenticating
+        // We can get it from the user's token() relationship
         try {
-            $token = \App\Models\OAuth\AccessToken::where('id', $bearerToken)
-                ->where('revoked', false)
-                ->where('expires_at', '>', now())
-                ->first();
+            // Get the current access token used for this request
+            // Passport stores this in the request after authentication
+            $psr = $request->server->get('psr_request') ?? $request;
 
-            return $token;
+            if (method_exists($user, 'token')) {
+                return $user->token();
+            }
+
+            // Fallback: Parse bearer token and find in database
+            $bearerToken = $request->bearerToken();
+            if (!$bearerToken) {
+                return null;
+            }
+
+            // Try to find token using Passport's TokenRepository
+            $tokenId = $this->getTokenIdFromBearer($bearerToken);
+            if ($tokenId) {
+                return \App\Models\OAuth\AccessToken::find($tokenId);
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            \Log::error('Failed to get access token', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id ?? null,
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Extract token ID from bearer token (if JWT).
+     *
+     * @param  string  $bearerToken
+     * @return string|null
+     */
+    protected function getTokenIdFromBearer(string $bearerToken): ?string
+    {
+        try {
+            // JWT tokens have 3 parts separated by dots
+            if (substr_count($bearerToken, '.') === 2) {
+                // Parse JWT payload
+                $parts = explode('.', $bearerToken);
+                $payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+                
+                // Return jti (JWT ID) which is the token ID in database
+                return $payload['jti'] ?? null;
+            }
+
+            // For opaque tokens, the bearer token itself might be the ID
+            return $bearerToken;
         } catch (\Exception $e) {
             return null;
         }
