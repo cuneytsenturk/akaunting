@@ -172,11 +172,6 @@ return [
     'scopes' => [
         // MCP Required Scopes
         'mcp:use' => 'Access MCP server capabilities and tools',
-        
-        // Standard API Scopes
-        'read' => 'Read access to your data',
-        'write' => 'Write access to your data',
-        'admin' => 'Full administrative access',
     ],
 
     /*

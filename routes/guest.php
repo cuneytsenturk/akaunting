@@ -35,7 +35,7 @@ Route::get('.well-known/ai-plugin.json', function () {
             'authorization_url' => url('/oauth/authorize'),
             'authorization_content_type' => 'application/x-www-form-urlencoded',
             'client_url' => url('/oauth/token'),
-            'scope' => 'mcp:use read write',
+            'scope' => 'mcp:use',
             'verification_tokens' => (object)[],
         ],
         'api' => [
@@ -70,7 +70,7 @@ Route::get('.well-known/mcp.json', function () {
         'oauth' => [
             'authorization_endpoint' => url('/oauth/authorize'),
             'token_endpoint' => url('/oauth/token'),
-            'scopes' => ['mcp:use', 'read', 'write'],
+            'scopes' => ['mcp:use'],
             'pkce_required' => true,
             'grant_types' => ['authorization_code', 'refresh_token'],
         ],
