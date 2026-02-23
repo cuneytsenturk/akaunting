@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\OAuth;
 
 use App\Abstracts\Http\Controller;
+use App\Events\OAuth\TokenCreated;
+use App\Events\OAuth\TokenRevoked;
 use App\Models\OAuth\PersonalAccessClient as PersonalAccessClientModel;
 use Illuminate\Http\Request;
 use Laravel\Passport\TokenRepository;
@@ -57,9 +59,16 @@ class PersonalAccessToken extends Controller
         if (config('oauth.company_aware', true)) {
             $accessToken->company_id = company_id();
         }
+
         $accessToken->created_from = 'oauth.web';
         $accessToken->created_by = user_id();
         $accessToken->save();
+
+        // Fire event
+        event(new TokenCreated($accessToken, $personalAccessClient->client, [
+            'grant_type' => 'personal_access',
+            'token_name' => $validated['name'],
+        ]));
 
         return response()->json([
             'success' => true,
@@ -104,6 +113,13 @@ class PersonalAccessToken extends Controller
         }
 
         $tokens->revokeAccessToken($token_id);
+
+        // Fire event
+        event(new TokenRevoked(
+            $token_id,
+            $token->client_id ?? null,
+            $user->getAuthIdentifier()
+        ));
 
         return response()->json([
             'success' => true,

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\OAuth;
 
 use App\Abstracts\Http\Controller;
+use App\Events\OAuth\ClientDeleted;
+use App\Events\OAuth\TokenRevoked;
 use App\Models\OAuth\Client;
 use App\Models\OAuth\AccessToken;
 use Illuminate\Http\Request;
@@ -95,10 +97,20 @@ class Clients extends Controller
             ->firstOrFail();
 
         // Revoke all active tokens for this client for the current user
-        $revokedCount = AccessToken::where('client_id', $client->id)
+        $tokens = AccessToken::where('client_id', $client->id)
             ->where('user_id', $user->id)
             ->where('revoked', false)
-            ->update(['revoked' => true]);
+            ->get();
+
+        $revokedCount = 0;
+        foreach ($tokens as $token) {
+            $token->revoked = true;
+            $token->save();
+            
+            // Fire event for each token
+            event(new TokenRevoked($token->id, $client->id, $user->id));
+            $revokedCount++;
+        }
 
         $message = trans('oauth.access_revoked', [
             'name' => $client->name,
@@ -124,6 +136,9 @@ class Clients extends Controller
 
         // Delete associated tokens
         AccessToken::where('client_id', $client->id)->delete();
+
+        // Fire event before deletion
+        event(new ClientDeleted($client));
 
         // Delete the client
         $client->delete();

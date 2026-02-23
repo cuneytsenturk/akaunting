@@ -81,14 +81,15 @@ class OAuth extends ServiceProvider
             now()->addMinutes(config('oauth.expiration.personal_access_token', 525600))
         );
 
-        // Register OAuth scopes
-        $scopes = config('oauth.scopes', []);
+        // Register OAuth scopes from database (with fallback to config)
+        $scopes = $this->getOAuthScopes();
         if (!empty($scopes)) {
             Passport::tokensCan($scopes);
         }
 
         // Set default scope for OAuth tokens
-        if ($defaultScope = config('oauth.default_scope')) {
+        $defaultScope = $this->getDefaultScope();
+        if ($defaultScope) {
             Passport::setDefaultScope($defaultScope);
         }
 
@@ -103,6 +104,70 @@ class OAuth extends ServiceProvider
         // Load migrations from package if needed
         if ($this->app->runningInConsole()) {
             $this->loadMigrationsFrom(database_path('migrations'));
+        }
+    }
+
+    /**
+     * Get OAuth scopes from database with caching
+     * Falls back to config if database is not available
+     *
+     * @return array
+     */
+    protected function getOAuthScopes(): array
+    {
+        try {
+            // Try to get scopes from database with 1 hour cache
+            return cache()->remember('oauth.scopes', 3600, function () {
+                // Check if Scope model exists and table is ready
+                if (!class_exists(\App\Models\OAuth\Scope::class)) {
+                    return config('oauth.scopes', []);
+                }
+
+                try {
+                    $scopes = \App\Models\OAuth\Scope::enabled()->ordered()->get();
+
+                    if ($scopes->isEmpty()) {
+                        return config('oauth.scopes', []);
+                    }
+
+                    return $scopes->mapWithKeys(function ($scope) {
+                        return [$scope->key => $scope->description ?? $scope->name];
+                    })->toArray();
+                } catch (\Exception $e) {
+                    // Table might not exist during migration
+                    return config('oauth.scopes', []);
+                }
+            });
+        } catch (\Exception $e) {
+            // Fallback to config if any error occurs
+            return config('oauth.scopes', []);
+        }
+    }
+
+    /**
+     * Get default OAuth scope from database
+     * Falls back to config if not found
+     *
+     * @return string|null
+     */
+    protected function getDefaultScope(): ?string
+    {
+        try {
+            return cache()->remember('oauth.default_scope', 3600, function () {
+                if (!class_exists(\App\Models\OAuth\Scope::class)) {
+                    return config('oauth.default_scope');
+                }
+
+                try {
+                    $defaultScope = \App\Models\OAuth\Scope::default()->first();
+
+                    return $defaultScope?->key ?? config('oauth.default_scope');
+                } catch (\Exception $e) {
+                    return config('oauth.default_scope');
+                }
+            });
+        } catch (\Exception $e) {
+            return config('oauth.default_scope');
         }
     }
 }

@@ -48,7 +48,7 @@
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
                                             <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-100">
-                                                <x-icon.key class="w-5 h-5 text-purple-600" />
+                                                <span class="material-icons w-5 h-5 text-purple-600">key</span>
                                             </span>
                                         </div>
                                         <div class="ml-4">

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\OAuth;
 
 use App\Abstracts\Http\Controller;
+use App\Events\OAuth\AuthorizationApproved;
+use App\Events\OAuth\AuthorizationDenied;
 use App\Http\Requests\OAuth\AuthorizeRequest;
 use App\Models\OAuth\Client;
 use Illuminate\Http\Request;
@@ -169,12 +171,21 @@ class Authorize extends Controller
 
         $authRequest = $request->session()->get('authRequest');
 
+        // Get client for event
+        $client = Client::find($authRequest->getClient()->getIdentifier());
+        $scopes = $this->parseScopes($authRequest);
+
         $authRequest->setUser(new BridgeUser($user->getAuthIdentifier()));
         $authRequest->setAuthorizationApproved(true);
 
         $response = $this->convertResponse(
             $this->server->completeAuthorizationRequest($authRequest, new Psr7Response())
         );
+
+        // Fire event
+        if ($client) {
+            event(new AuthorizationApproved($client, $user, $scopes));
+        }
 
         // Clean up session
         $request->session()->forget('oauth.company_id');
@@ -192,7 +203,16 @@ class Authorize extends Controller
     {
         $authRequest = $request->session()->get('authRequest');
 
+        // Get client for event
+        $client = Client::find($authRequest->getClient()->getIdentifier());
+        $user = $request->user();
+
         $authRequest->setAuthorizationApproved(false);
+
+        // Fire event
+        if ($client && $user) {
+            event(new AuthorizationDenied($client, $user));
+        }
 
         return $this->convertResponse(
             $this->server->completeAuthorizationRequest($authRequest, new Psr7Response())

@@ -238,6 +238,7 @@ return [
     'last_received'         => 'Last Received :date',
     'preview_in_window'     => 'Preview in new window',
     'copied'                => 'Copied',
+    'done'                  => 'Done',
     'preview_mode'          => 'Preview Mode',
     'go_back'               => 'Go back to :type',
     'validation_error'      => 'Validation error',

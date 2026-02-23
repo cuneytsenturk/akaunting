@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\OAuth;
 
 use App\Abstracts\Http\Controller;
+use App\Events\OAuth\ClientCreated;
+use App\Events\OAuth\ClientDeleted;
+use App\Events\OAuth\ClientSecretRegenerated;
+use App\Events\OAuth\ClientUpdated;
 use App\Models\OAuth\Client as ClientModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -71,7 +75,7 @@ class Client extends Controller
 
         // Support multiple redirect URLs (comma-separated or JSON array)
         $redirectUrls = $this->parseRedirectUrls($validated['redirect']);
-        
+
         if (empty($redirectUrls)) {
             return response()->json([
                 'success' => false,
@@ -79,7 +83,7 @@ class Client extends Controller
                 'message' => trans('oauth.invalid_redirect_urls'),
             ], 422);
         }
-        
+
         // Store as JSON array for multiple URLs or single URL
         $validated['redirect'] = count($redirectUrls) > 1 ? json_encode($redirectUrls) : $redirectUrls[0];
 
@@ -97,9 +101,13 @@ class Client extends Controller
         if (config('oauth.company_aware', true)) {
             $client->company_id = company_id();
         }
+
         $client->created_from = 'oauth.web';
         $client->created_by = user_id();
         $client->save();
+
+        // Fire event
+        event(new ClientCreated($client, !$request->filled('confidential')));
 
         $message = trans('messages.success.added', ['type' => trans_choice('general.clients', 1)]);
 
@@ -162,7 +170,7 @@ class Client extends Controller
 
         // Support multiple redirect URLs (comma-separated or JSON array)
         $redirectUrls = $this->parseRedirectUrls($validated['redirect']);
-        
+
         if (empty($redirectUrls)) {
             return response()->json([
                 'success' => false,
@@ -170,13 +178,17 @@ class Client extends Controller
                 'message' => trans('oauth.invalid_redirect_urls'),
             ], 422);
         }
-        
+
         // Store as JSON array for multiple URLs or single URL
         $validated['redirect'] = count($redirectUrls) > 1 ? json_encode($redirectUrls) : $redirectUrls[0];
 
         $client = ClientModel::findOrFail($client_id);
+        $original = $client->getOriginal();
 
         $clients->update($client, $validated['name'], $validated['redirect']);
+
+        // Fire event
+        event(new ClientUpdated($client->fresh(), $original));
 
         $message = trans('messages.success.updated', ['type' => trans_choice('general.clients', 1)]);
 
@@ -201,6 +213,9 @@ class Client extends Controller
     public function destroy(ClientRepository $clients, $client_id)
     {
         $client = ClientModel::findOrFail($client_id);
+
+        // Fire event before deletion
+        event(new ClientDeleted($client));
 
         $clients->delete($client);
 
@@ -228,6 +243,9 @@ class Client extends Controller
         $client->secret = hash('sha256', $plainSecret = Str::random(40));
         $client->save();
 
+        // Fire event
+        event(new ClientSecretRegenerated($client, $plainSecret));
+
         return response()->json([
             'success' => true,
             'error' => false,
@@ -248,7 +266,7 @@ class Client extends Controller
     protected function parseRedirectUrls(string $input): array
     {
         $urls = [];
-        
+
         // Try to decode as JSON first
         $decoded = json_decode($input, true);
         if (is_array($decoded)) {
@@ -257,7 +275,7 @@ class Client extends Controller
             // Split by comma, newline, or space
             $urls = preg_split('/[\s,\n\r]+/', $input, -1, PREG_SPLIT_NO_EMPTY);
         }
-        
+
         // Validate each URL
         $validUrls = [];
         foreach ($urls as $url) {
@@ -266,7 +284,7 @@ class Client extends Controller
                 $validUrls[] = $url;
             }
         }
-        
+
         return $validUrls;
     }
 }

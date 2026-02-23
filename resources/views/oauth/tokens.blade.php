@@ -51,7 +51,7 @@
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
                                             <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-green-100">
-                                                <x-icon.vpn_key class="w-5 h-5 text-green-600" />
+                                                <span class="material-icons w-5 h-5 text-green-600">vpn_key</span>
                                             </span>
                                         </div>
                                         <div class="ml-4">
@@ -158,7 +158,7 @@
                 <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
                     <div class="flex">
                         <div class="flex-shrink-0">
-                            <x-icon.exclamation class="h-5 w-5 text-yellow-400" />
+                            <span class="material-icons h-5 w-5 text-yellow-400">error</span>
                         </div>
                         <div class="ml-3">
                             <p class="text-sm text-yellow-700">

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Banking\Transaction;
+use App\Models\OAuth\Scope;
 use Illuminate\Support\ServiceProvider as Provider;
 
 class Observer extends Provider
@@ -25,5 +26,10 @@ class Observer extends Provider
     public function boot()
     {
         Transaction::observe('App\Observers\Transaction');
+
+        // Register OAuth Scope observer if table exists
+        if (class_exists(Scope::class)) {
+            Scope::observe('App\Observers\OAuth\ScopeObserver');
+        }
     }
 }

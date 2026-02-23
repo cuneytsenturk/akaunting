@@ -65,7 +65,7 @@
                             <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
-                                        <x-icon.info class="h-5 w-5 text-blue-400" />
+                                        <span class="material-icons h-5 w-5 text-blue-400">info</span>
                                     </div>
                                     <div class="ml-3">
                                         <p class="text-sm text-blue-700">

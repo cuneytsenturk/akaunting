@@ -101,7 +101,7 @@
                                 <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
                                     <div class="flex">
                                         <div class="flex-shrink-0">
-                                            <x-icon.exclamation class="h-5 w-5 text-yellow-400" />
+                                            <span class="material-icons h-5 w-5 text-yellow-400">error</span>
                                         </div>
                                         <div class="ml-3">
                                             <p class="text-sm text-yellow-700">
