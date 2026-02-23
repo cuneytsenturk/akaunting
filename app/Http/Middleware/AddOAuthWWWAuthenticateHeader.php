@@ -41,49 +41,53 @@ class AddOAuthWWWAuthenticateHeader
      */
     protected function addWWWAuthenticateHeader(Response $response, Request $request): void
     {
-        // Build the resource metadata URL
-        $baseUrl = url('/');
-        $oauthPrefix = config('oauth.routes.prefix', 'oauth');
-        $resourceMetadataUrl = "{$baseUrl}/{$oauthPrefix}/.well-known/oauth-protected-resource";
-
-        // Determine error details from response
-        $error = 'invalid_token';
-        $errorDescription = 'The access token is invalid or has expired';
-        $scope = null;
-
-        // Try to extract error from JSON response
-        if ($response->headers->get('Content-Type') === 'application/json') {
-            $content = json_decode($response->getContent(), true);
-            if (isset($content['error'])) {
-                $error = $content['error'];
-            }
-            if (isset($content['error_description'])) {
-                $errorDescription = $content['error_description'];
-            }
-            if (isset($content['scope'])) {
-                $scope = $content['scope'];
-            }
+        // Use the named route if available (registered in MCP ai.php routes).
+        // The MCP package's AddWwwAuthenticateHeader middleware also checks for this
+        // same named route, so using it here keeps both middlewares consistent.
+        if (app('router')->has('mcp.oauth.protected-resource')) {
+            $resourceMetadataUrl = route('mcp.oauth.protected-resource', ['path' => $request->path()]);
+        } else {
+            $baseUrl = url('/');
+            $oauthPrefix = config('oauth.routes.prefix', 'oauth');
+            $resourceMetadataUrl = "{$baseUrl}/{$oauthPrefix}/.well-known/oauth-protected-resource";
         }
 
-        // Build WWW-Authenticate header value
-        // Format: Bearer resource_metadata="...", error="...", error_description="..."
-        $headerParts = [
-            'Bearer',
-            'resource_metadata="' . $resourceMetadataUrl . '"',
-            'error="' . $error . '"',
-            'error_description="' . addslashes($errorDescription) . '"',
-        ];
-
-        // Add scope if available
-        if ($scope) {
-            $headerParts[] = 'scope="' . $scope . '"';
-        }
-
-        // Add realm (optional but recommended)
         $realm = config('app.name', 'Akaunting');
-        $headerParts[] = 'realm="' . $realm . '"';
 
-        $headerValue = implode(', ', $headerParts);
+        // RFC 6750: 'error' should only be present when a token was provided
+        // but failed authentication. For unauthenticated probes (no token),
+        // only realm and resource_metadata are needed so the client can
+        // initiate the OAuth flow.
+        $hasToken = !empty($request->bearerToken());
+
+        if ($hasToken) {
+            // Token was present but invalid/expired – include error details
+            $error = 'invalid_token';
+            $errorDescription = 'The access token is invalid or has expired';
+
+            // Try to extract error from JSON response body
+            $contentType = $response->headers->get('Content-Type', '');
+            if (str_contains($contentType, 'application/json')) {
+                $content = json_decode($response->getContent(), true);
+                if (isset($content['error'])) {
+                    $error = $content['error'];
+                }
+                if (isset($content['error_description'])) {
+                    $errorDescription = $content['error_description'];
+                }
+            }
+
+            $headerValue = 'Bearer'
+                . ' realm="' . $realm . '"'
+                . ', resource_metadata="' . $resourceMetadataUrl . '"'
+                . ', error="' . $error . '"'
+                . ', error_description="' . addslashes($errorDescription) . '"';
+        } else {
+            // No token provided – minimal challenge so client can start OAuth
+            $headerValue = 'Bearer'
+                . ' realm="' . $realm . '"'
+                . ', resource_metadata="' . $resourceMetadataUrl . '"';
+        }
 
         // Set the WWW-Authenticate header
         $response->headers->set('WWW-Authenticate', $headerValue);

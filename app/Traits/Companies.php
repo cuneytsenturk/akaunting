@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\OAuth\AccessToken;
 use App\Traits\Users;
 
 trait Companies
@@ -18,7 +19,11 @@ trait Companies
 
         $request = $this->request ?: request();
 
-        if (request_is_api($request)) {
+        // Treat OAuth bearer-token requests as API requests so that:
+        //  1. company_id can be extracted from the access token itself, and
+        //  2. The user's first company is used as a fallback (instead of abort 500).
+        // This handles MCP endpoints like /mcp that are not under the api/* prefix.
+        if (request_is_api($request) || request_is_mcp($request)) {
             return $this->getCompanyIdFromApi($request);
         }
 
@@ -32,22 +37,33 @@ trait Companies
 
     public function getCompanyIdFromApi($request)
     {
-        // Priority 1: OAuth Token'dan al (en güvenli ve kullanıcı dostu)
+        // Priority 1: OAuth Token (must be first since it doesn't rely on session or route)
         $company_id = $this->getCompanyIdFromToken($request);
 
-        // Priority 2: Query string'den al (?company_id=2)
-        if (!$company_id) {
+        // Priority 2: Query string (?company_id=2)
+        if (! $company_id) {
             $company_id = $this->getCompanyIdFromQuery($request);
         }
 
-        // Priority 3: Header'dan al (X-Company: 2)
-        if (!$company_id) {
+        // Priority 3: Header (X-Company: 2)
+        if (! $company_id) {
             $company_id = $this->getCompanyIdFromHeader($request);
         }
 
         // Priority 4: User'ın ilk company'si (fallback)
-        if (!$company_id) {
-            $company_id = $this->getFirstCompanyOfUser()?->id;
+        // user() uses auth()->user() which checks the default (web) guard.
+        // For OAuth requests (e.g. /mcp), only the 'passport' guard is set by
+        // auth.oauth.once — the web guard is never populated. So we must resolve
+        // the user from the passport guard explicitly before falling back to
+        // getFirstCompanyOfUser().
+        if (! $company_id) {
+            $apiUser = auth()->guard('passport')->user() ?? user();
+
+            if ($apiUser) {
+                $company = $apiUser->withoutEvents(fn () => $apiUser->companies()->enabled()->first());
+
+                $company_id = $company?->id;
+            }
         }
 
         return $company_id;
@@ -62,10 +78,12 @@ trait Companies
      * @param  \Illuminate\Http\Request  $request
      * @return int|null
      */
-    protected function getCompanyIdFromToken($request)
+    protected function getCompanyIdFromToken($request): ?int
     {
         // Check if OAuth is enabled and user is authenticated via Passport
-        if (!config('oauth.enabled', false)) {
+        if (! config('oauth.enabled', false)) {
+            logger()->debug('OAuth token: Disabled, skipping token company_id extraction.');
+
             return null;
         }
 
@@ -77,10 +95,23 @@ trait Companies
                 if ($user && method_exists($user, 'token')) {
                     $token = $user->token();
 
-                    if ($token && isset($token->company_id)) {
+                    if ($token && isset($token->company_id) && $token->company_id) {
+                        logger()->debug('OAuth token: Extracted company_id from token: ' . $token->company_id);
+
                         return (int) $token->company_id;
                     }
+
+                    // Token exists but no company_id stored — use the passport user's first company
+                    logger()->debug('OAuth token: No company_id on token, falling back to passport user\'s first company.');
+                    $company = $user->withoutEvents(fn () => $user->companies()->enabled()->first());
+                    if ($company) {
+                        return (int) $company->id;
+                    }
+
+                    logger()->debug('OAuth token: No companies found for authenticated passport user.');
                 }
+
+                logger()->debug('OAuth token: No company_id found on authenticated user\'s token.');
             }
 
             // Fallback: Try to get token from request directly
@@ -88,19 +119,25 @@ trait Companies
                 $tokenId = $request->bearerToken();
 
                 // Try to find the token in database
-                $tokenModel = config('oauth.company_aware', true) 
-                    ? \App\Models\OAuth\AccessToken::withoutGlobalScope('company')->where('id', $tokenId)->first()
+                $tokenModel = config('oauth.company_aware', true)
+                    ? AccessToken::withoutGlobalScope('company')->where('id', $tokenId)->first()
                     : null;
 
                 if ($tokenModel && isset($tokenModel->company_id)) {
+                    logger()->debug('OAuth token: Extracted company_id from token model: ' . $tokenModel->company_id);
+
                     return (int) $tokenModel->company_id;
                 }
+
+                logger()->debug('OAuth token: No company_id found on token model for bearer token.');
             }
         } catch (\Exception $e) {
             // Silently fail if OAuth token checking fails
             // This allows fallback to other methods
-            \Log::debug('OAuth token company_id extraction failed: ' . $e->getMessage());
+            logger()->debug('OAuth token: company_id extraction failed: ' . $e->getMessage());
         }
+
+        logger()->debug('OAuth token: No company_id found in token.');
 
         return null;
     }

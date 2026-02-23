@@ -2,6 +2,7 @@
 
 namespace App\Models\OAuth;
 
+use App\Models\Auth\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Passport\Token as PassportToken;
 
@@ -76,8 +77,8 @@ class AccessToken extends PassportToken
         // Automatically set company_id when creating
         static::creating(function ($token) {
             if (config('oauth.company_aware', true) && empty($token->company_id)) {
-                // Priority 1: Get from AuthCode (authorization code flow)
-                // When exchanging authorization code for token, inherit company_id from auth code
+                // Priority 1: Authorization code flow — inherit company_id from the auth code.
+                // The auth code was created in the user's browser session and has company_id set.
                 if ($token->user_id && $token->client_id) {
                     $authCode = \App\Models\OAuth\AuthCode::withoutGlobalScope('company')
                         ->where('user_id', $token->user_id)
@@ -96,14 +97,39 @@ class AccessToken extends PassportToken
                     }
                 }
 
-                // Priority 2: Get from OAuth session (during authorization - implicit/password grant)
+                // Priority 2: Refresh token flow — inherit company_id from the most recent
+                // access token for the same user+client. When ChatGPT exchanges a refresh
+                // token, there is no auth code and no session, but the previous access token
+                // already has the correct company_id.
+                if (empty($token->company_id) && $token->user_id && $token->client_id) {
+                    $previous = static::withoutGlobalScope('company')
+                        ->where('user_id', $token->user_id)
+                        ->where('client_id', $token->client_id)
+                        ->whereNotNull('company_id')
+                        ->where('company_id', '>', 0)
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+
+                    if ($previous) {
+                        $token->company_id = $previous->company_id;
+                    }
+                }
+
+                // Priority 3: OAuth session (set during Authorize::approve()).
+                // Only available when the token request originates from the user's browser.
                 if (empty($token->company_id) && session()->has('oauth.company_id')) {
                     $token->company_id = session('oauth.company_id');
                 }
 
-                // Priority 3: Get from current session (personal access tokens, API calls)
-                if (empty($token->company_id)) {
-                    $token->company_id = company_id();
+                // Priority 4: Look up the user directly and take their first enabled company.
+                // This handles any remaining case (personal access tokens, auto-approve with
+                // no session, or any grant where the above fallbacks find nothing).
+                if (empty($token->company_id) && $token->user_id) {
+                    if ($user = User::find($token->user_id)) {
+                        if ($company = $user->companies()->enabled()->first()) {
+                            $token->company_id = $company->id;
+                        }
+                    }
                 }
             }
 

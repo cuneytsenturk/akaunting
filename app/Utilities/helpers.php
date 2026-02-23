@@ -395,6 +395,15 @@ if (! function_exists('request_is_api')) {
     }
 }
 
+if (! function_exists('request_is_mcp')) {
+    function request_is_mcp(Request|null $request = null): bool
+    {
+        $r = $request ?: request();
+
+        return $r->is('/mcp') || $r->is('/mcp/*');
+    }
+}
+
 if (! function_exists('request_is_auth')) {
     function request_is_auth(Request|null $request = null): bool
     {

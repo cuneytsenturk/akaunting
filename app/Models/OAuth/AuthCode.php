@@ -2,6 +2,7 @@
 
 namespace App\Models\OAuth;
 
+use App\Models\Auth\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Passport\AuthCode as PassportAuthCode;
 
@@ -40,7 +41,6 @@ class AuthCode extends PassportAuthCode
         'company_id' => 'integer',
         'user_id' => 'integer',
         'client_id' => 'integer',
-        'scopes' => 'array',
         'revoked' => 'boolean',
         'expires_at' => 'datetime',
         'created_by' => 'integer',
@@ -75,11 +75,24 @@ class AuthCode extends PassportAuthCode
         // Automatically set company_id when creating
         static::creating(function ($authCode) {
             if (config('oauth.company_aware', true) && empty($authCode->company_id)) {
-                // Check if company_id is set in OAuth session (during authorization)
+                // Priority 1: company selected by user on the consent screen
                 if (session()->has('oauth.company_id')) {
                     $authCode->company_id = session('oauth.company_id');
-                } else {
-                    $authCode->company_id = company_id();
+                }
+
+                // Priority 2: current web company context (e.g. URL-bound company)
+                if (empty($authCode->company_id)) {
+                    $authCode->company_id = company_id() ?: null;
+                }
+
+                // Priority 3: user's first enabled company (handles auto-approve with
+                // multi-company users where neither session nor context is available)
+                if (empty($authCode->company_id) && $authCode->user_id) {
+                    if ($user = User::find($authCode->user_id)) {
+                        if ($company = $user->companies()->enabled()->first()) {
+                            $authCode->company_id = $company->id;
+                        }
+                    }
                 }
             }
 
