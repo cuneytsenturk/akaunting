@@ -57,21 +57,19 @@ class Kernel extends HttpKernel
             'read.only',
             'language',
             'firewall.all',
-            //'oauth.www.authenticate', // MCP REQUIRED: Add WWW-Authenticate header to 401 responses
-            //'oauth.validate.audience', // MCP REQUIRED: Validate token audience when OAuth is used
         ],
 
         'oauth' => [
+            'oauth.www.authenticate', // MCP REQUIRED: Must be first so it wraps auth and adds WWW-Authenticate to 401s
             'auth.oauth.once',
             'auth.disabled',
             'throttle:oauth',
-            'permission:read-api',
+            'permission:read-api,guard:passport', // guard:passport because auth.oauth.once authenticates via passport, not web guard
             'company.identify',
             'bindings',
             'read.only',
             'language',
             'firewall.all',
-            'oauth.www.authenticate', // MCP REQUIRED: Add WWW-Authenticate header to 401 responses
             'oauth.validate.audience', // MCP REQUIRED: Validate token audience (RFC 8707)
         ],
 
@@ -191,7 +189,7 @@ class Kernel extends HttpKernel
         'dynamic.api.auth' => \App\Http\Middleware\DynamicApiAuth::class,
         'auth.redirect' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'oauth.www.authenticate' => \App\Http\Middleware\AddOAuthWWWAuthenticateHeader::class,
-        'oauth.validate.audience' => \App\Http\Middleware\ValidateTokenAudience::class,
+        'oauth.validate.audience' => \App\Http\Middleware\ValidateOAuthTokenAudience::class,
         'company.identify' => \App\Http\Middleware\IdentifyCompany::class,
         'dropzone' => \App\Http\Middleware\Dropzone::class,
         'header.x' => \App\Http\Middleware\AddXHeader::class,

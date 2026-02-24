@@ -11,7 +11,7 @@ trait Companies
 
     public $request = null;
 
-    public function getCompanyId()
+    public function getCompanyId(): ?int
     {
         if ($company_id = company_id()) {
             return $company_id;
@@ -19,51 +19,68 @@ trait Companies
 
         $request = $this->request ?: request();
 
-        // Treat OAuth bearer-token requests as API requests so that:
-        //  1. company_id can be extracted from the access token itself, and
-        //  2. The user's first company is used as a fallback (instead of abort 500).
-        // This handles MCP endpoints like /mcp that are not under the api/* prefix.
-        if (request_is_api($request) || request_is_mcp($request)) {
+        if (request_is_api($request)) {
             return $this->getCompanyIdFromApi($request);
+        }
+
+        if (request_is_mcp($request)) {
+            return $this->getCompanyIdFromMcp($request);
         }
 
         return $this->getCompanyIdFromWeb($request);
     }
 
-    public function getCompanyIdFromWeb($request)
+    public function getCompanyIdFromWeb($request): ?int
     {
         return $this->getCompanyIdFromRoute($request) ?: ($this->getCompanyIdFromQuery($request) ?: $this->getCompanyIdFromHeader($request));
     }
 
-    public function getCompanyIdFromApi($request)
+    public function getCompanyIdFromApi($request): ?int
     {
-        // Priority 1: OAuth Token (must be first since it doesn't rely on session or route)
-        $company_id = $this->getCompanyIdFromToken($request);
+        // Priority 1: Query string (?company_id=2)
+        $company_id = $this->getCompanyIdFromQuery($request);
 
-        // Priority 2: Query string (?company_id=2)
-        if (! $company_id) {
-            $company_id = $this->getCompanyIdFromQuery($request);
-        }
-
-        // Priority 3: Header (X-Company: 2)
+        // Priority 2: Header (X-Company: 2)
         if (! $company_id) {
             $company_id = $this->getCompanyIdFromHeader($request);
         }
 
-        // Priority 4: User'ın ilk company'si (fallback)
-        // user() uses auth()->user() which checks the default (web) guard.
-        // For OAuth requests (e.g. /mcp), only the 'passport' guard is set by
-        // auth.oauth.once — the web guard is never populated. So we must resolve
-        // the user from the passport guard explicitly before falling back to
-        // getFirstCompanyOfUser().
+        // Priority 3: First company of the user (fallback)
         if (! $company_id) {
-            $apiUser = auth()->guard('passport')->user() ?? user();
+            $company_id = $this->getFirstCompanyOfUser()?->id;
+        }
 
-            if ($apiUser) {
-                $company = $apiUser->withoutEvents(fn () => $apiUser->companies()->enabled()->first());
+        return $company_id;
+    }
 
-                $company_id = $company?->id;
+    public function getCompanyIdFromMcp($request): ?int
+    {
+        // Priority 0: OAuth Token (must be first since it doesn't rely on session or route)
+        $company_id = $this->getCompanyIdFromToken($request);
+
+        // Priority 1: Query string (?company_id=2)
+        if (! $company_id) {
+            $company_id = $this->getCompanyIdFromQuery($request);
+        }
+
+        // Priority 2: Header (X-Company: 2)
+        if (! $company_id) {
+            $company_id = $this->getCompanyIdFromHeader($request);
+        }
+
+        // Priority 3: First company of the user (fallback)
+        if (! $company_id) {
+            $user = auth()->guard('passport')->user();
+
+            if (! $user) {
+                logger()->debug('OAuth: No authenticated user found when trying to get first company');
+
+                return null;
             }
+
+            $company = $user->withoutEvents(fn () => $user->companies()->enabled()->first());
+
+            $company_id = $company?->id;
         }
 
         return $company_id;
@@ -81,8 +98,8 @@ trait Companies
     protected function getCompanyIdFromToken($request): ?int
     {
         // Check if OAuth is enabled and user is authenticated via Passport
-        if (! config('oauth.enabled', false)) {
-            logger()->debug('OAuth token: Disabled, skipping token company_id extraction.');
+        if (! config('oauth.enabled')) {
+            logger()->debug('OAuth: Disabled, skipping token company_id extraction');
 
             return null;
         }
@@ -96,22 +113,25 @@ trait Companies
                     $token = $user->token();
 
                     if ($token && isset($token->company_id) && $token->company_id) {
-                        logger()->debug('OAuth token: Extracted company_id from token: ' . $token->company_id);
+                        logger()->debug('OAuth: Extracted company_id from token', [
+                            'company_id' => $token->company_id,
+                            'user_id' => $user->id,
+                        ]);
 
                         return (int) $token->company_id;
                     }
 
                     // Token exists but no company_id stored — use the passport user's first company
-                    logger()->debug('OAuth token: No company_id on token, falling back to passport user\'s first company.');
+                    logger()->debug('OAuth: No company_id on token, falling back to passport user\'s first company');
                     $company = $user->withoutEvents(fn () => $user->companies()->enabled()->first());
                     if ($company) {
                         return (int) $company->id;
                     }
 
-                    logger()->debug('OAuth token: No companies found for authenticated passport user.');
+                    logger()->debug('OAuth: No companies found for authenticated passport user');
                 }
 
-                logger()->debug('OAuth token: No company_id found on authenticated user\'s token.');
+                logger()->debug('OAuth: No company_id found on authenticated user\'s token');
             }
 
             // Fallback: Try to get token from request directly
@@ -124,25 +144,30 @@ trait Companies
                     : null;
 
                 if ($tokenModel && isset($tokenModel->company_id)) {
-                    logger()->debug('OAuth token: Extracted company_id from token model: ' . $tokenModel->company_id);
+                    logger()->debug('OAuth: Extracted company_id from token model', [
+                        'company_id' => $tokenModel->company_id,
+                        'token_id' => $tokenModel->id,
+                    ]);
 
                     return (int) $tokenModel->company_id;
                 }
 
-                logger()->debug('OAuth token: No company_id found on token model for bearer token.');
+                logger()->debug('OAuth: No company_id found on token model for bearer token');
             }
         } catch (\Exception $e) {
             // Silently fail if OAuth token checking fails
             // This allows fallback to other methods
-            logger()->debug('OAuth token: company_id extraction failed: ' . $e->getMessage());
+            logger()->debug('OAuth: company_id extraction failed', [
+                'error' => $e->getMessage(),
+            ]);
         }
 
-        logger()->debug('OAuth token: No company_id found in token.');
+        logger()->debug('OAuth: No company_id found in token');
 
         return null;
     }
 
-    public function getCompanyIdFromRoute($request)
+    public function getCompanyIdFromRoute($request): ?int
     {
         $route_id = (int) $request->route('company_id');
         $segment_id = (int) $request->segment(1);
@@ -150,12 +175,12 @@ trait Companies
         return $route_id ?: $segment_id;
     }
 
-    public function getCompanyIdFromQuery($request)
+    public function getCompanyIdFromQuery($request): ?int
     {
         return (int) $request->query('company_id');
     }
 
-    public function getCompanyIdFromHeader($request)
+    public function getCompanyIdFromHeader($request): ?int
     {
         return (int) $request->header('X-Company');
     }

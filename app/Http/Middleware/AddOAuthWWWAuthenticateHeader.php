@@ -58,20 +58,20 @@ class AddOAuthWWWAuthenticateHeader
         // but failed authentication. For unauthenticated probes (no token),
         // only realm and resource_metadata are needed so the client can
         // initiate the OAuth flow.
-        $hasToken = !empty($request->bearerToken());
-
-        if ($hasToken) {
+        if (! empty($request->bearerToken())) {
             // Token was present but invalid/expired – include error details
             $error = 'invalid_token';
-            $errorDescription = 'The access token is invalid or has expired';
+            $errorDescription = 'OAuth: The access token is invalid or has expired';
 
             // Try to extract error from JSON response body
             $contentType = $response->headers->get('Content-Type', '');
             if (str_contains($contentType, 'application/json')) {
                 $content = json_decode($response->getContent(), true);
+
                 if (isset($content['error'])) {
                     $error = $content['error'];
                 }
+
                 if (isset($content['error_description'])) {
                     $errorDescription = $content['error_description'];
                 }
