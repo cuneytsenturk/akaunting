@@ -208,6 +208,10 @@ class Kernel extends HttpKernel
         'ability' => \Laratrust\Middleware\LaratrustAbility::class,
         'role' => \Laratrust\Middleware\LaratrustRole::class,
         'permission' => \Laratrust\Middleware\LaratrustPermission::class,
+
+        // OAuth Scopes (Akaunting - extends Passport)
+        'scopes' => \App\Http\Middleware\CheckScopes::class,      // ALL listed scopes required (AND)
+        'scope'  => \App\Http\Middleware\CheckForAnyScope::class, // ANY listed scope sufficient (OR)
     ];
 
     /**

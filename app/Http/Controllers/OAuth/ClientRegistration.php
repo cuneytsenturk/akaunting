@@ -4,7 +4,9 @@ namespace App\Http\Controllers\OAuth;
 
 use App\Abstracts\Http\Controller;
 use App\Http\Requests\OAuth\ClientRegistration as ClientRegistrationRequest;
+use App\Models\OAuth\AccessToken;
 use App\Models\OAuth\Client;
+use App\Models\OAuth\RefreshToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -18,9 +20,13 @@ class ClientRegistration extends Controller
      */
     public function __construct()
     {
-        // No authentication required for public client registration
-        // Rate limiting is applied via middleware
+        // No authentication required for public client registration.
+        // Rate limiting is applied via middleware in routes/oauth.php.
     }
+
+    // -------------------------------------------------------------------------
+    // POST /oauth/register  (RFC 7591 - Registration)
+    // -------------------------------------------------------------------------
 
     /**
      * Register a new OAuth client dynamically (RFC 7591).
@@ -29,49 +35,205 @@ class ClientRegistration extends Controller
      * automatically register themselves without manual intervention.
      *
      * Reference: https://datatracker.ietf.org/doc/html/rfc7591
-     *
-     * @param  \App\Http\Requests\OAuth\ClientRegistration  $request
-     * @return \Illuminate\Http\Response
      */
     public function register(ClientRegistrationRequest $request)
     {
         try {
-            // Validation handled by ClientRegistrationRequest
             $validated = $request->validated();
 
-            // Create the client
             $client = $this->createClient($validated);
 
-            // Build response according to RFC 7591
-            $response = $this->buildRegistrationResponse($client);
-
-            return response()->json($response, 201, [
-                'Content-Type' => 'application/json',
-                'Cache-Control' => 'no-store',
-            ]);
-
+            return response()->json(
+                $this->buildRegistrationResponse($client),
+                201,
+                ['Content-Type' => 'application/json', 'Cache-Control' => 'no-store']
+            );
         } catch (ValidationException $e) {
             return response()->json([
-                'error' => 'invalid_client_metadata',
+                'error'             => 'invalid_client_metadata',
                 'error_description' => $e->getMessage(),
             ], 400);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'server_error',
+                'error'             => 'server_error',
                 'error_description' => 'An error occurred during client registration',
             ], 500);
         }
     }
 
+    // -------------------------------------------------------------------------
+    // GET /oauth/register/{client_id}  (RFC 7592 - Client Read)
+    // -------------------------------------------------------------------------
+
     /**
-     * Validate redirect URI according to OAuth 2.1 security best practices.
+     * Return the client's current registration metadata.
      *
-     * @param  string  $uri
-     * @return bool
+     * Requires the registration_access_token issued at registration time
+     * as a Bearer token in the Authorization header.
+     */
+    public function show(Request $request, $clientId)
+    {
+        $client = Client::withoutGlobalScope('company')->findOrFail($clientId);
+
+        if (!$this->validateRegistrationToken($request, $client)) {
+            return $this->invalidTokenResponse();
+        }
+
+        return response()->json(
+            $this->buildClientMetadata($client),
+            200,
+            ['Cache-Control' => 'no-store']
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // PUT /oauth/register/{client_id}  (RFC 7592 - Client Update)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Update a dynamically registered client (RFC 7592).
+     *
+     * RFC 7592 mandates PUT (full replacement), not PATCH.
+     * The client_id and client_secret cannot be changed via this endpoint.
+     *
+     * Updatable fields: redirect_uris, client_name, token_endpoint_auth_method
+     *
+     * Requires the registration_access_token as a Bearer token.
+     */
+    public function update(Request $request, $clientId)
+    {
+        $client = Client::withoutGlobalScope('company')->findOrFail($clientId);
+
+        if (!$this->validateRegistrationToken($request, $client)) {
+            return $this->invalidTokenResponse();
+        }
+
+        try {
+            $validated = $request->validate([
+                'client_name'   => 'required|string|max:255',
+                'redirect_uris' => 'required|array|min:1',
+                'redirect_uris.*' => [
+                    'required',
+                    'string',
+                    'url',
+                    function ($attribute, $value, $fail) {
+                        if (!$this->isValidRedirectUri($value)) {
+                            $fail("The redirect URI '{$value}' is not allowed. Production URIs must use HTTPS.");
+                        }
+                    },
+                ],
+                'grant_types'                => 'sometimes|array',
+                'token_endpoint_auth_method' => 'sometimes|string|in:client_secret_post,client_secret_basic,none',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'error'             => 'invalid_client_metadata',
+                'error_description' => $e->getMessage(),
+            ], 400);
+        }
+
+        $client->name     = $validated['client_name'];
+        $client->redirect = json_encode($validated['redirect_uris']);
+        $client->save();
+
+        return response()->json(
+            $this->buildClientMetadata($client),
+            200,
+            ['Cache-Control' => 'no-store']
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // DELETE /oauth/register/{client_id}  (RFC 7592 - Client Delete)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Revoke and permanently delete a dynamically registered client (RFC 7592).
+     *
+     * Also force-deletes all associated access tokens and refresh tokens.
+     * Returns 204 No Content on success (per RFC 7592 §2.3).
+     *
+     * Requires the registration_access_token as a Bearer token.
+     */
+    public function destroy(Request $request, $clientId)
+    {
+        $client = Client::withoutGlobalScope('company')->findOrFail($clientId);
+
+        if (!$this->validateRegistrationToken($request, $client)) {
+            return $this->invalidTokenResponse();
+        }
+
+        // Cascade: revoke all access tokens and their refresh tokens
+        $tokenIds = AccessToken::allCompanies()
+            ->withTrashed()
+            ->where('client_id', $client->id)
+            ->pluck('id');
+
+        if ($tokenIds->isNotEmpty()) {
+            RefreshToken::allCompanies()
+                ->withTrashed()
+                ->whereIn('access_token_id', $tokenIds)
+                ->forceDelete();
+
+            AccessToken::allCompanies()
+                ->withTrashed()
+                ->where('client_id', $client->id)
+                ->forceDelete();
+        }
+
+        $client->forceDelete();
+
+        return response()->noContent(); // 204
+    }
+
+    // -------------------------------------------------------------------------
+    // Internal helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Validate the registration_access_token sent as Bearer in the Authorization header.
+     *
+     * Security properties:
+     *   - Only works when oauth.dcr.enable_management is true.
+     *   - Uses hash_equals() to prevent timing attacks.
+     *   - Stored as SHA-256(plain_token), so the plain token is never in the DB.
+     */
+    protected function validateRegistrationToken(Request $request, Client $client): bool
+    {
+        if (!config('oauth.dcr.enable_management', false)) {
+            return false;
+        }
+
+        if (empty($client->registration_token)) {
+            return false;
+        }
+
+        $bearerToken = $request->bearerToken();
+        if (!$bearerToken) {
+            return false;
+        }
+
+        return hash_equals($client->registration_token, hash('sha256', $bearerToken));
+    }
+
+    /**
+     * Return 401 Unauthorized for missing or invalid registration tokens.
+     */
+    protected function invalidTokenResponse()
+    {
+        return response()->json([
+            'error'             => 'invalid_token',
+            'error_description' => 'The registration access token is missing, invalid, or the management endpoint is disabled.',
+        ], 401, [
+            'WWW-Authenticate' => 'Bearer error="invalid_token"',
+        ]);
+    }
+
+    /**
+     * Validate redirect URI per OAuth 2.1 security requirements.
      */
     protected function isValidRedirectUri(string $uri): bool
     {
-        // Parse URI
         $parsed = parse_url($uri);
 
         if (!$parsed || !isset($parsed['scheme']) || !isset($parsed['host'])) {
@@ -79,9 +241,9 @@ class ClientRegistration extends Controller
         }
 
         $scheme = $parsed['scheme'];
-        $host = $parsed['host'];
+        $host   = $parsed['host'];
 
-        // Allow localhost for development
+        // Allow HTTP on localhost for development
         if (in_array($host, ['localhost', '127.0.0.1', '[::1]'])) {
             return in_array($scheme, ['http', 'https']);
         }
@@ -91,9 +253,13 @@ class ClientRegistration extends Controller
             return false;
         }
 
-        // Check against whitelisted domains if configured
+        // Fragment is forbidden in redirect URIs (RFC 6749 §3.1.2)
+        if (isset($parsed['fragment'])) {
+            return false;
+        }
+
         $allowedDomains = config('oauth.dcr.allowed_domains', []);
-        
+
         if (!empty($allowedDomains)) {
             foreach ($allowedDomains as $allowedDomain) {
                 if ($host === $allowedDomain || str_ends_with($host, '.' . $allowedDomain)) {
@@ -103,55 +269,50 @@ class ClientRegistration extends Controller
             return false;
         }
 
-        // URI cannot contain fragment
-        if (isset($parsed['fragment'])) {
-            return false;
-        }
-
         return true;
     }
 
     /**
-     * Create the OAuth client.
-     *
-     * @param  array  $validated
-     * @return \App\Models\OAuth\Client
+     * Create the OAuth client and (when enable_management is true) generate and
+     * store a hashed registration_access_token for subsequent management calls.
      */
     protected function createClient(array $validated): Client
     {
-        $isConfidential = $validated['token_endpoint_auth_method'] !== 'none';
+        $isConfidential = ($validated['token_endpoint_auth_method'] ?? 'client_secret_post') !== 'none';
 
-        // Create client
         $client = new Client();
-        $client->name = $validated['client_name'];
-        $client->redirect = json_encode($validated['redirect_uris']);
+        $client->name                   = $validated['client_name'];
+        $client->redirect               = json_encode($validated['redirect_uris']);
         $client->personal_access_client = false;
-        $client->password_client = false;
-        $client->revoked = false;
+        $client->password_client        = false;
+        $client->revoked                = false;
+        $client->created_from           = 'oauth.dcr';
+        $client->created_by             = null;
 
-        // Generate secret for confidential clients
         if ($isConfidential) {
             $plainSecret = Str::random(40);
-            
-            if (config('oauth.hash_client_secrets', false)) {
-                $client->secret = password_hash($plainSecret, PASSWORD_BCRYPT);
-            } else {
-                $client->secret = $plainSecret;
-            }
-            
-            // Store plain secret temporarily for response
+
+            $client->secret = config('oauth.hash_client_secrets', false)
+                ? password_hash($plainSecret, PASSWORD_BCRYPT)
+                : $plainSecret;
+
+            // Temporary — needed in buildRegistrationResponse(), not persisted
             $client->plain_secret = $plainSecret;
         }
 
-        // Set company ID if company-aware
         if (config('oauth.company_aware', true)) {
-            // For DCR, use system company or first available
             $client->company_id = company_id() ?? 1;
         }
 
-        // Set metadata
-        $client->created_from = 'oauth.dcr';
-        $client->created_by = null; // No user for public registration
+        if (config('oauth.dcr.enable_management', false)) {
+            $plainToken = Str::random(64);
+
+            // Store only the hash; the plain token is returned once in the response
+            $client->registration_token = hash('sha256', $plainToken);
+
+            // Temporary — needed in buildRegistrationResponse(), not persisted
+            $client->plain_registration_token = $plainToken;
+        }
 
         $client->save();
 
@@ -159,103 +320,42 @@ class ClientRegistration extends Controller
     }
 
     /**
-     * Build the registration response according to RFC 7591.
-     *
-     * @param  \App\Models\OAuth\Client  $client
-     * @return array
+     * Build the RFC 7591 registration response.
+     * The client_secret and registration_access_token appear only here — never again.
      */
     protected function buildRegistrationResponse(Client $client): array
     {
-        $redirectUris = json_decode($client->redirect, true);
+        $response = $this->buildClientMetadata($client);
 
-        $response = [
-            'client_id' => (string) $client->id,
-            'client_id_issued_at' => $client->created_at->timestamp,
-            'redirect_uris' => $redirectUris,
-            'client_name' => $client->name,
-            'grant_types' => ['authorization_code', 'refresh_token'],
-            'response_types' => ['code'],
-            'token_endpoint_auth_method' => $client->secret ? 'client_secret_post' : 'none',
-        ];
-
-        // Add client secret for confidential clients (only in response, never again)
         if (isset($client->plain_secret)) {
-            $response['client_secret'] = $client->plain_secret;
+            $response['client_secret']            = $client->plain_secret;
             $response['client_secret_expires_at'] = 0; // Never expires
         }
 
-        // Add registration access token (optional - for client management)
-        if (config('oauth.dcr.enable_management', false)) {
-            $registrationToken = Str::random(64);
-            // Store this token for later client updates/deletes
-            // TODO: Implement token storage
-            
-            $response['registration_access_token'] = $registrationToken;
-            $response['registration_client_uri'] = url("/oauth/register/{$client->id}");
+        if (isset($client->plain_registration_token)) {
+            $response['registration_access_token'] = $client->plain_registration_token;
+            $response['registration_client_uri']   = url("/oauth/register/{$client->id}");
         }
 
         return $response;
     }
 
     /**
-     * Get client information (RFC 7591 - Client Read).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $clientId
-     * @return \Illuminate\Http\Response
+     * Build client metadata for GET and PUT responses (RFC 7592).
+     * Never includes client_secret or registration_access_token.
      */
-    public function show(Request $request, $clientId)
+    protected function buildClientMetadata(Client $client): array
     {
-        // TODO: Validate registration_access_token
-        
-        $client = Client::findOrFail($clientId);
+        $redirectUris = json_decode($client->redirect, true) ?? [$client->redirect];
 
-        $response = [
-            'client_id' => (string) $client->id,
-            'client_id_issued_at' => $client->created_at->timestamp,
-            'redirect_uris' => json_decode($client->redirect, true),
-            'client_name' => $client->name,
-            'grant_types' => ['authorization_code', 'refresh_token'],
-            'response_types' => ['code'],
+        return [
+            'client_id'                  => (string) $client->id,
+            'client_id_issued_at'        => $client->created_at->timestamp,
+            'client_name'                => $client->name,
+            'redirect_uris'              => $redirectUris,
+            'grant_types'                => ['authorization_code', 'refresh_token'],
+            'response_types'             => ['code'],
             'token_endpoint_auth_method' => $client->secret ? 'client_secret_post' : 'none',
         ];
-
-        return response()->json($response);
-    }
-
-    /**
-     * Update client information (RFC 7591 - Client Update).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $clientId
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $clientId)
-    {
-        // TODO: Validate registration_access_token
-        // TODO: Implement client update logic
-        
-        return response()->json([
-            'error' => 'not_implemented',
-            'error_description' => 'Client update is not yet implemented',
-        ], 501);
-    }
-
-    /**
-     * Delete client (RFC 7591 - Client Delete).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $clientId
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Request $request, $clientId)
-    {
-        // TODO: Validate registration_access_token
-        
-        $client = Client::findOrFail($clientId);
-        $client->revoked = true;
-        $client->save();
-
-        return response()->json(null, 204);
     }
 }

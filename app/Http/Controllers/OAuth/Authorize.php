@@ -7,6 +7,7 @@ use App\Events\OAuth\AuthorizationApproved;
 use App\Events\OAuth\AuthorizationDenied;
 use App\Http\Requests\OAuth\AuthorizeRequest;
 use App\Models\OAuth\Client;
+use App\Services\OAuth\ScopeMapper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -59,6 +60,11 @@ class Authorize extends Controller
             $scopes = $this->parseScopes($authRequest);
             $client = $clients->find($authRequest->getClient()->getIdentifier());
             $user = $request->user();
+
+            // Filter requested scopes to only those the user is eligible to grant.
+            // Users cannot delegate permissions they don't have themselves.
+            // mcp:use and other manual scopes pass through unconditionally.
+            $scopes = $user->filterGrantableScopes($scopes);
 
             // MCP REQUIRED: Extract resource parameter (RFC 8707)
             // This will be used as the token audience
@@ -129,13 +135,19 @@ class Authorize extends Controller
             $request->session()->put('authToken', $token = Str::random());
             $request->session()->put('authRequest', $authRequest);
 
+            // Build scope objects with descriptions for the authorization view
+            $scopeObjects = collect($scopes)->map(fn (string $key) => (object) [
+                'id'          => $key,
+                'description' => ScopeMapper::describe($key),
+            ])->all();
+
             return $this->response('oauth.authorize', [
-                'client' => $client,
-                'user' => $user,
-                'scopes' => $scopes,
-                'request' => $request,
-                'authToken' => $token,
-                'companies' => $companyOptions,
+                'client'            => $client,
+                'user'              => $user,
+                'scopes'            => $scopeObjects,
+                'request'           => $request,
+                'authToken'         => $token,
+                'companies'         => $companyOptions,
                 'selectedCompanyId' => $selectedCompanyId,
             ]);
         } catch (\League\OAuth2\Server\Exception\OAuthServerException $e) {

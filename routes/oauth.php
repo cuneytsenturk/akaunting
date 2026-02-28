@@ -61,6 +61,22 @@ Route::post('register', 'OAuth\ClientRegistration@register')
     ->withoutMiddleware('oauth')
     ->middleware(['throttle:dcr', 'bindings']);
 
+// DCR Management Endpoints (RFC 7592) — require registration_access_token as Bearer
+// Enable via OAUTH_DCR_ENABLE_MANAGEMENT=true in .env
+Route::get('register/{client_id}', 'OAuth\ClientRegistration@show')
+    ->name('oauth.register.show')
+    ->withoutMiddleware('oauth');
+
+Route::put('register/{client_id}', 'OAuth\ClientRegistration@update')
+    ->name('oauth.register.update')
+    ->withoutMiddleware('oauth')
+    ->middleware(['throttle:oauth', 'bindings']);
+
+Route::delete('register/{client_id}', 'OAuth\ClientRegistration@destroy')
+    ->name('oauth.register.destroy')
+    ->withoutMiddleware('oauth')
+    ->middleware(['throttle:oauth', 'bindings']);
+
 Route::group(['as' => 'passport.'], function () {
     // Token Management (User's personal tokens)
     Route::get('tokens', 'OAuth\Token@index')->name('tokens.index');
