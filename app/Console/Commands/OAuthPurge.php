@@ -128,7 +128,7 @@ class OAuthPurge extends Command
                     $q->orWhere('expires_at', '<', $cutoff);
                 }
             })
-            ->whereDoesntHave('accessToken')
+            ->whereDoesntHave('accessToken', fn ($q) => $q->withTrashed())
             ->forceDelete();
 
         if ($orphanedRefreshCount > 0) {

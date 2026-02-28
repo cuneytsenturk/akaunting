@@ -38,6 +38,7 @@ class Client extends PassportClient
         'personal_access_client',
         'password_client',
         'revoked',
+        'registration_token',
         'created_from',
         'created_by',
     ];
