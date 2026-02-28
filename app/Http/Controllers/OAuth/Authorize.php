@@ -120,6 +120,9 @@ class Authorize extends Controller
                     $request->session()->put('oauth.company_id', $selectedCompanyId);
                 }
 
+                // Fire event so listeners (e.g. free plan assignment) still run on auto-approval path
+                event(new AuthorizationApproved($client, $user, $scopes));
+
                 return $this->approveRequest($authRequest, $user);
             }
 

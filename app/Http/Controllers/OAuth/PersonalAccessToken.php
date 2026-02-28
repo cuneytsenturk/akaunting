@@ -24,6 +24,43 @@ class PersonalAccessToken extends Controller
     }
 
     /**
+     * List the user's personal access tokens for the current company.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Laravel\Passport\TokenRepository  $tokens
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index(Request $request, TokenRepository $tokens)
+    {
+        $user = $request->user();
+
+        $userTokens = $tokens->forUser($user->getAuthIdentifier());
+
+        // Filter to personal access tokens only (those without a client that is a password/credentials client)
+        $personalTokens = collect($userTokens)->filter(function ($token) {
+            return $token->client && $token->client->personal_access_client;
+        });
+
+        // Filter by company if company_aware is enabled
+        if (config('oauth.company_aware', true)) {
+            $personalTokens = $personalTokens->where('company_id', company_id());
+        }
+
+        return response()->json(
+            $personalTokens->values()->map(function ($token) {
+                return [
+                    'id'         => $token->id,
+                    'name'       => $token->name,
+                    'scopes'     => $token->scopes,
+                    'revoked'    => $token->revoked,
+                    'created_at' => $token->created_at,
+                    'expires_at' => $token->expires_at,
+                ];
+            })
+        );
+    }
+
+    /**
      * Create a new personal access token for the user.
      *
      * @param  \Illuminate\Http\Request  $request

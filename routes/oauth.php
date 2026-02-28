@@ -81,6 +81,7 @@ Route::group(['as' => 'passport.'], function () {
     Route::delete('clients/{client}', 'OAuth\Clients@destroy')->name('clients.destroy');
 
     // Personal Access Tokens
+    Route::get('personal-access-tokens', 'OAuth\PersonalAccessToken@index')->name('personal.tokens.index');
     Route::post('personal-access-tokens', 'OAuth\PersonalAccessToken@store')->name('personal.tokens.store');
     Route::delete('personal-access-tokens/{token_id}', 'OAuth\PersonalAccessToken@destroy')->name('personal.tokens.destroy');
 
