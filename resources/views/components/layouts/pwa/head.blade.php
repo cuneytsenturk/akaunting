@@ -31,6 +31,6 @@
 
 <script type="text/javascript">
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register("{{ asset('serviceworker.js') }}");
+        navigator.serviceWorker.register("{{ asset('serviceworker.js') }}?v={{ version('short') }}");
     }
 </script>

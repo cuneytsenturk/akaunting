@@ -64,6 +64,7 @@
         {
             "src": "public/img/pwa/screenshot-dashboard.png",
             "sizes": "1932x1394",
+            "form_factor": "wide",
             "type": "image/png"
         },
         {
