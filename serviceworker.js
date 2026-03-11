@@ -7,6 +7,9 @@ const STATIC_CACHE = `${CACHE_PREFIX}-static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `${CACHE_PREFIX}-images-${CACHE_VERSION}`;
 const OFFLINE_URL = "offline.html";
 
+// Set to true to see detailed cache logs in DevTools > Console (SW context)
+const DEBUG = false;
+
 const PRECACHE_URLS = [
     OFFLINE_URL,
     "public/img/pwa/icon-192x192.png",
@@ -44,6 +47,11 @@ self.addEventListener("activate", (event) => {
     );
 });
 
+function log(strategy, source, url) {
+    if (!DEBUG) return;
+    console.log(`[SW] ${strategy} | ${source.padEnd(7)} | ${url}`);
+}
+
 function isNavigationRequest(request) {
     return request.mode === "navigate" || (request.headers.get("accept") || "").includes("text/html");
 }
@@ -60,13 +68,23 @@ async function staleWhileRevalidate(request, cacheName) {
         .then((response) => {
             if (response && response.ok) {
                 cache.put(request, response.clone());
+                log("SWR", "updated", request.url);
             }
 
             return response;
         })
-        .catch(() => cached);
+        .catch(() => {
+            log("SWR", "offline", request.url);
+            return cached;
+        });
 
-    return cached || networkFetch;
+    if (cached) {
+        log("SWR", "cache", request.url);
+        return cached;
+    }
+
+    log("SWR", "network", request.url);
+    return networkFetch;
 }
 
 async function cacheFirst(request, cacheName) {
@@ -74,10 +92,12 @@ async function cacheFirst(request, cacheName) {
     const cached = await cache.match(request);
 
     if (cached) {
+        log("CF", "cache", request.url);
         return cached;
     }
 
-    const response = await fetch(request);
+    log("CF", "network", request.url);
+    const response = await fetch(request).catch(() => null);
 
     if (response && response.ok) {
         cache.put(request, response.clone());
@@ -100,8 +120,12 @@ self.addEventListener("fetch", (event) => {
     if (isNavigationRequest(request)) {
         event.respondWith(
             fetch(request)
-                .then((response) => response)
+                .then((response) => {
+                    log("NAV", "network", request.url);
+                    return response;
+                })
                 .catch(async () => {
+                    log("NAV", "offline", request.url);
                     const offlineResponse = await caches.match(OFFLINE_URL);
 
                     if (offlineResponse) {

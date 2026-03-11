@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <rect width="96" height="96" rx="20" fill="#55588b"/>
+  <!-- Material Icon: file_open -->
+  <g transform="translate(24, 24) scale(2)">
+    <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h7v-2H6V4h7v5h5v3h2V8l-6-6zm4 14.88V14h-4v4h2v2.12L19.12 17 18 15.88z" fill="white"/>
+  </g>
+</svg>
