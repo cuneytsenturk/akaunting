@@ -5,20 +5,19 @@ const SCOPE_PATH = new URL(self.registration.scope).pathname
 const CACHE_PREFIX = `pwa-${SCOPE_PATH}`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `${CACHE_PREFIX}-images-${CACHE_VERSION}`;
-const toScopedUrl = (path) => new URL(path, self.registration.scope).toString();
-const OFFLINE_URL = toScopedUrl("offline.html");
+const OFFLINE_URL = "offline.html";
 
 const PRECACHE_URLS = [
     OFFLINE_URL,
-    toScopedUrl("public/img/pwa/icon-192x192.png"),
-    toScopedUrl("public/img/pwa/icon-512x512.png"),
-    toScopedUrl("public/css/app.css"),
-    toScopedUrl("public/css/fonts/material-icons/style.css"),
-    toScopedUrl("public/vendor/quicksand/css/quicksand.css"),
+    "public/img/pwa/icon-192x192.png",
+    "public/img/pwa/icon-512x512.png",
+    "public/css/app.css",
+    "public/css/fonts/material-icons/style.css",
+    "public/vendor/quicksand/css/quicksand.css",
 ];
 
 const PRECACHE_IMAGE_URLS = [
-    toScopedUrl("public/img/empty_pages/transactions.png"),
+    "public/img/empty_pages/transactions.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -105,7 +104,18 @@ self.addEventListener("fetch", (event) => {
                 .catch(async () => {
                     const offlineResponse = await caches.match(OFFLINE_URL);
 
-                    return offlineResponse || new Response("Offline", {
+                    if (offlineResponse) {
+                        const html = await offlineResponse.text();
+                        const base = self.registration.scope;
+                        const injected = html.replace("<head>", `<head><base href="${base}">`);
+
+                        return new Response(injected, {
+                            status: 200,
+                            headers: { "Content-Type": "text/html; charset=utf-8" },
+                        });
+                    }
+
+                    return new Response("Offline", {
                         status: 503,
                         headers: { "Content-Type": "text/plain" }
                     });
