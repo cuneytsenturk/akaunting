@@ -5,19 +5,30 @@ const SCOPE_PATH = new URL(self.registration.scope).pathname
 const CACHE_PREFIX = `pwa-${SCOPE_PATH}`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `${CACHE_PREFIX}-images-${CACHE_VERSION}`;
-const OFFLINE_URL = "offline.html";
+const toScopedUrl = (path) => new URL(path, self.registration.scope).toString();
+const OFFLINE_URL = toScopedUrl("offline.html");
 
 const PRECACHE_URLS = [
     OFFLINE_URL,
-    "public/img/pwa/icon-192x192.png",
-    "public/img/pwa/icon-512x512.png"
+    toScopedUrl("public/img/pwa/icon-192x192.png"),
+    toScopedUrl("public/img/pwa/icon-512x512.png"),
+    toScopedUrl("public/css/app.css"),
+    toScopedUrl("public/css/fonts/material-icons/style.css"),
+    toScopedUrl("public/vendor/quicksand/css/quicksand.css"),
+];
+
+const PRECACHE_IMAGE_URLS = [
+    toScopedUrl("public/img/empty_pages/transactions.png"),
 ];
 
 self.addEventListener("install", (event) => {
     self.skipWaiting();
 
     event.waitUntil(
-        caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
+        Promise.all([
+            caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)),
+            caches.open(IMAGE_CACHE).then((cache) => cache.addAll(PRECACHE_IMAGE_URLS)),
+        ])
     );
 });
 
@@ -78,6 +89,10 @@ async function cacheFirst(request, cacheName) {
 
 self.addEventListener("fetch", (event) => {
     const { request } = event;
+
+    if (!request.url.startsWith("http")) {
+        return;
+    }
 
     if (request.method !== "GET") {
         return;

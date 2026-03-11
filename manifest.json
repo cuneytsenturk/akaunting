@@ -1,6 +1,8 @@
 {
     "name": "Akaunting",
     "short_name": "Akaunting",
+    "id": "/?utm_source=pwa",
+    "lang": "en",
     "description": "Free invoicing and accounting software for small businesses and freelancers.",
     "categories": [
         "finance",
@@ -12,7 +14,7 @@
     "background_color": "#ffffff",
     "orientation": "any",
     "android_package_name": "com.akaunting.akaunting",
-    "prefer_related_applications": true,
+    "prefer_related_applications": false,
     "related_applications": [
         {
             "id": "com.akaunting.akaunting",
@@ -70,6 +72,7 @@
         {
             "src": "public/img/pwa/screenshot-invoice.png",
             "sizes": "2748x1986",
+            "form_factor": "wide",
             "type": "image/png"
         }
     ],
@@ -82,7 +85,7 @@
             "icons": [
                 {
                     "src": "public/img/pwa/icon-192x192.png",
-					"sizes": "192x192"
+                    "sizes": "192x192"
                 }
             ]
         },
@@ -94,7 +97,7 @@
             "icons": [
                 {
                     "src": "public/img/pwa/icon-192x192.png",
-					"sizes": "192x192"
+                    "sizes": "192x192"
                 }
             ]
         },
@@ -106,7 +109,7 @@
             "icons": [
                 {
                     "src": "public/img/pwa/icon-192x192.png",
-					"sizes": "192x192"
+                    "sizes": "192x192"
                 }
             ]
         },
@@ -118,7 +121,7 @@
             "icons": [
                 {
                     "src": "public/img/pwa/icon-192x192.png",
-					"sizes": "192x192"
+                    "sizes": "192x192"
                 }
             ]
         }
