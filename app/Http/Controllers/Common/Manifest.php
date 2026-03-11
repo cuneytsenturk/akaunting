@@ -19,6 +19,7 @@ class Manifest extends Controller
             'categories'       => ['finance', 'business'],
             'start_url'        => route('dashboard', ['utm_source' => 'pwa']),
             'display'          => 'standalone',
+            'display_override' => ['window-controls-overlay', 'standalone'],
             'theme_color'      => '#ffffff',
             'background_color' => '#ffffff',
             'orientation'      => 'any',

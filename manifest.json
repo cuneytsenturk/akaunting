@@ -10,6 +10,10 @@
     ],
     "start_url": ".?utm_source=pwa",
     "display": "standalone",
+    "display_override": [
+        "window-controls-overlay",
+        "standalone"
+    ],
     "theme_color": "#ffffff",
     "background_color": "#ffffff",
     "orientation": "any",
