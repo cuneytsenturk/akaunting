@@ -1,44 +1,61 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex,nofollow">
-    <title>Akaunting - Offline</title>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="robots" content="noindex,nofollow">
 
-    <link rel="stylesheet" href="public/css/fonts/material-icons/style.css" type="text/css">
-    <link rel="stylesheet" href="public/vendor/quicksand/css/quicksand.css" type="text/css">
-    <link rel="stylesheet" href="public/css/app.css" type="text/css">
+        <title>Akaunting - Offline Mode</title>
 
-    <style>
-        .offline-actions {
-            margin-top: 12px;
-        }
+        <meta name="theme-color" content="#ffffff">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="application-name" content="Akaunting">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
+        <meta name="apple-mobile-web-app-title" content="Akaunting">
+        <meta name="msapplication-TileColor" content="#ffffff">
+        <meta name="msapplication-TileImage" content="public/img/pwa/icon-512x512.png">
 
-        .offline-actions button {
-            border: 1px solid #d1d5db;
-            background: #ffffff;
-            border-radius: 0.5rem;
-            padding: 0.5rem 0.875rem;
-            cursor: pointer;
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
-    <div class="max-w-7xl m-auto h-screen flex flex-col sm:flex-row items-center justify-center sm:justify-between px-12 lg:px-24">
-        <div class="flex flex-col items-start gap-y-4 mb-10 sm:mb-0 sm:-mt-24">
-            <span class="text-lg">You are currently offline.</span>
-            <p class="text-black-400 text-sm leading-6 max-w-md">
-                Akaunting cannot reach the internet right now. Check your connection and try again.
-            </p>
-            <div class="offline-actions">
-                <button type="button" onclick="location.reload()">Try again</button>
+        <link rel="stylesheet" href="public/css/fonts/material-icons/style.css" type="text/css">
+        <link rel="stylesheet" href="public/vendor/quicksand/css/quicksand.css" type="text/css">
+        <link rel="manifest" href="manifest.json">
+        <link rel="icon" href="public/img/favicon.ico" type="image/png">
+        <link rel="icon" sizes="512x512" href="public/img/pwa/icon-512x512.png">
+        <link rel="apple-touch-icon" href="public/img/pwa/icon-512x512.png">
+        <link rel="stylesheet" href="public/css/app.css" type="text/css">
+
+        <style>
+            .offline-actions {
+                margin-top: 12px;
+            }
+
+            .offline-actions button {
+                border: 1px solid #d1d5db;
+                background: #ffffff;
+                border-radius: 0.5rem;
+                padding: 0.5rem 0.875rem;
+                cursor: pointer;
+                font-weight: 600;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="max-w-7xl m-auto h-screen flex flex-col sm:flex-row items-center justify-center sm:justify-between px-12 lg:px-24">
+            <div class="flex flex-col items-start gap-y-4 mb-10 sm:mb-0 sm:-mt-24">
+                <span class="text-lg">Sorry, you're offline.</span>
+
+                <p class="text-black-400 text-sm leading-6 max-w-md">
+                    Akaunting cannot reach the internet right now. Please, try again later!
+                </p>
+
+                <div class="offline-actions">
+                    <button type="button" onclick="location.reload()">Try Again</button>
+                </div>
             </div>
-        </div>
 
-        <img src="public/img/empty_pages/transactions.png" alt="Offline" />
-    </div>
-</body>
+            <img src="public/img/empty_pages/transactions.png" alt="Sorry, you're offline." />
+        </div>
+    </body>
 </html>
