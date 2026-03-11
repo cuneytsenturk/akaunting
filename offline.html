@@ -2,87 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
     <title>Akaunting - Offline</title>
+
+    <link rel="stylesheet" href="public/css/fonts/material-icons/style.css" type="text/css">
+    <link rel="stylesheet" href="public/vendor/quicksand/css/quicksand.css" type="text/css">
+    <link rel="stylesheet" href="public/css/app.css" type="text/css">
+
     <style>
-        :root {
-            --bg: #f4f7fb;
-            --card: #ffffff;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --accent: #3b82f6;
-            --border: #e5e7eb;
+        .offline-actions {
+            margin-top: 12px;
         }
 
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text);
-            background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 55%);
-            display: grid;
-            place-items: center;
-            padding: 24px;
-        }
-
-        .card {
-            width: 100%;
-            max-width: 560px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
-        }
-
-        h1 {
-            margin: 0 0 10px;
-            font-size: 1.5rem;
-            line-height: 1.2;
-        }
-
-        p {
-            margin: 0;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        .actions {
-            margin-top: 18px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            border: none;
-            border-radius: 10px;
-            padding: 10px 14px;
-            background: var(--accent);
-            color: #fff;
-            font-size: 0.95rem;
+        .offline-actions button {
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.875rem;
             cursor: pointer;
-        }
-
-        small {
-            display: block;
-            margin-top: 14px;
-            color: var(--muted);
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
-    <main class="card">
-        <h1>You are offline</h1>
-        <p>
-            Akaunting cannot reach the network right now. Please check your connection and try again.
-        </p>
-        <div class="actions">
-            <button type="button" onclick="location.reload()">Try again</button>
+    <div class="max-w-7xl m-auto h-screen flex flex-col sm:flex-row items-center justify-center sm:justify-between px-12 lg:px-24">
+        <div class="flex flex-col items-start gap-y-4 mb-10 sm:mb-0 sm:-mt-24">
+            <span class="text-lg">You are currently offline.</span>
+            <p class="text-black-400 text-sm leading-6 max-w-md">
+                Akaunting cannot reach the internet right now. Check your connection and try again.
+            </p>
+            <div class="offline-actions">
+                <button type="button" onclick="location.reload()">Try again</button>
+            </div>
         </div>
-        <small>This page is served by your PWA cache.</small>
-    </main>
+
+        <img src="public/img/empty_pages/transactions.png" alt="Offline" />
+    </div>
 </body>
 </html>

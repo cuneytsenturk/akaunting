@@ -38,6 +38,10 @@ php artisan install --db-name="akaunting" --db-username="root" --db-password="pa
 
 * Create sample data (optional): `php artisan sample-data:seed`
 
+## PWA Operations
+
+* PWA release and validation checklist: [PWA_OPERATIONS.md](./PWA_OPERATIONS.md)
+
 ## Contributing
 
 Please, be very clear on your commit messages and Pull Requests, empty Pull Request messages may be rejected without reason.
