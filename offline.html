@@ -29,15 +29,6 @@
             .offline-actions {
                 margin-top: 12px;
             }
-
-            .offline-actions button {
-                border: 1px solid #d1d5db;
-                background: #ffffff;
-                border-radius: 0.5rem;
-                padding: 0.5rem 0.875rem;
-                cursor: pointer;
-                font-weight: 600;
-            }
         </style>
     </head>
 
@@ -51,7 +42,13 @@
                 </p>
 
                 <div class="offline-actions">
-                    <button type="button" onclick="location.reload()">Try Again</button>
+                    <button
+                        type="button"
+                        onclick="location.reload()"
+                        class="px-3 py-1.5 mb-0 bg-green hover:bg-green-700 rounded-xl text-white text-sm font-bold leading-6"
+                    >
+                        Try Again
+                    </button>
                 </div>
             </div>
 
