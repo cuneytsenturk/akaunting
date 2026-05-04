@@ -299,7 +299,8 @@ class Route extends Provider
     protected function configureRateLimiting()
     {
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(config('app.throttles.api'));
+            return Limit::perMinute(config('app.throttles.api'))
+                        ->by($request->user()?->id ?: $request->ip());
         });
 
         RateLimiter::for('import', function (Request $request) {
