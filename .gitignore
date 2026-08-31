@@ -75,6 +75,7 @@ fabric.properties
 /public/storage
 /public/js
 /public/mix-manifest.json
+/public/build
 /storage/*.key
 /vendor
 /.idea
@@ -96,3 +97,7 @@ modules/*
 !modules/.gitkeep
 .laravelstatsrc
 .DS_Store
+
+# Playwright / Vitest output
+/playwright-report
+/test-results
