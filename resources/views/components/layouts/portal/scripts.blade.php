@@ -12,10 +12,10 @@
 @stack('charts')
 
 <!-- <script type="text/javascript" src="{{ asset('public/akaunting-js/hotkeys.js') }}" defer></script> -->
-<script type="text/javascript" src="{{ asset('public/akaunting-js/generalAction.js') }}"></script>
-<script type="text/javascript" src="{{ asset('public/akaunting-js/popper.js') }}"></script>
+<script type="text/javascript" src="{{ asset('public/akaunting-js/generalAction.js') }}" defer></script>
+<script type="text/javascript" src="{{ asset('public/akaunting-js/popper.js') }}" defer></script>
 
-<script type="text/javascript">
+<script type="module">
     "use strict";
 
     var Layout = (function() {

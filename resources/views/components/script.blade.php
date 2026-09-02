@@ -1,3 +1,7 @@
 @push('scripts_start')
-    <script src="{{ asset($source) }}"></script>
+    @if ($alias == 'core')
+        {!! $source !!}
+    @else
+        <script src="{{ $source }}"></script>
+    @endif
 @endpush

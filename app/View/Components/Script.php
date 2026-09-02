@@ -3,6 +3,8 @@
 namespace App\View\Components;
 
 use App\Abstracts\View\Component;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Foundation\Vite;
 
 class Script extends Component
 {
@@ -15,7 +17,7 @@ class Script extends Component
     /** @var string */
     public $file;
 
-    /** @var string */
+    /** @var string|\Illuminate\Contracts\Support\Htmlable */
     public $source;
 
     /**
@@ -45,10 +47,10 @@ class Script extends Component
 
     protected function getSource($alias, $folder, $file)
     {
-        $path = 'public/js/';
-        $version = version('short');
-
         if ($alias != 'core') {
+            $path = 'public/js/';
+            $version = version('short');
+
             try {
                 $module = module($alias);
 
@@ -59,14 +61,42 @@ class Script extends Component
             } catch (\Exception $e) {
 
             }
+
+            if (! empty($folder)) {
+                $path .= $folder . '/';
+            }
+
+            $path .= $file . '.min.js?v=' . $version;
+
+            return asset($path);
         }
 
-        if (! empty($folder)) {
-            $path .= $folder . '/';
+        return static::coreSource($folder, $file);
+    }
+
+    /**
+     * Resolve a core (non-module) JS entry's <script>/<link> tags via the
+     * Vite manifest — including any CSS the entry (or a chunk it imports,
+     * e.g. the shared `global` mixin) pulls in via a plain `import '*.css'`.
+     * A bare Vite::asset() URL isn't enough here: transitive CSS is only
+     * discoverable by walking the manifest's import graph, which is exactly
+     * what the Vite instance's __invoke() (the same call @vite() makes)
+     * already does — reimplementing that walk here would just duplicate it.
+     *
+     * @param  string  $folder
+     * @param  string  $file
+     * @return \Illuminate\Contracts\Support\Htmlable
+     */
+    public static function coreSource(string $folder, string $file): Htmlable
+    {
+        $key = $folder !== '' ? "$folder/$file" : $file;
+
+        $entries = json_decode(file_get_contents(base_path('vite-entries.json')), true);
+
+        if (! isset($entries[$key])) {
+            throw new \RuntimeException("No Vite entry mapped for \"$key\" in vite-entries.json.");
         }
 
-        $path .= $file . '.min.js?v=' . $version;
-
-        return $path;
+        return app(Vite::class)([$entries[$key]]);
     }
 }

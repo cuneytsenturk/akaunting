@@ -14,7 +14,7 @@
     var wizard_modules = {!! json_encode($modules) !!};
 </script>
 
-<script src="{{ asset('public/js/wizard/wizard.min.js?v=' . version('short')) }}"></script>
+{!! \App\View\Components\Script::coreSource('wizard', 'wizard') !!}
 
 @stack('body_css')
 

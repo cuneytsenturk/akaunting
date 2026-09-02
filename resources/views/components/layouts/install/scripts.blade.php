@@ -1,6 +1,6 @@
 @stack('scripts_start')
 
-<script src="{{ asset('public/js/install.min.js?v=' . version('short')) }}"></script>
+{!! \App\View\Components\Script::coreSource('', 'install') !!}
 
 @stack('body_css')
 
