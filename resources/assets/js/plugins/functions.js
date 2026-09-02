@@ -1,3 +1,5 @@
+import { evaluate } from 'mathjs';
+
 // Get Url Paramater
 function getQueryVariable(variable) {
     var query = window.location.search.substring(1);
@@ -24,8 +26,6 @@ function removeURLParameter(param) {
 
     window.history.replaceState({}, document.title, url);
 }
-
-const { evaluate } = require('mathjs');
 
 // use the evaluate function to evaluate the expression
 function calculationToQuantity(quantity) {

@@ -151,11 +151,9 @@ import Vue from 'vue';
 
 import { Select, Option, OptionGroup, ColorPicker } from 'element-ui';
 
-import AkauntingModalAddNew from './AkauntingModalAddNew';
 import AkauntingModal from './AkauntingModal';
 import AkauntingMoney from './AkauntingMoney';
 import AkauntingRadioGroup from './AkauntingRadioGroup';
-import AkauntingSelect from './AkauntingSelect';
 import AkauntingDate from './AkauntingDate';
 import AkauntingRecurring from './AkauntingRecurring';
 
@@ -169,9 +167,13 @@ export default {
         [Option.name]: Option,
         [OptionGroup.name]: OptionGroup,
         [ColorPicker.name]: ColorPicker,
-        AkauntingModalAddNew,
+        // Dynamic import — AkauntingModalAddNew imports this component back
+        // (add-new picker inside a select), a static import here is a circular
+        // dependency that Rollup's stricter ESM evaluation order can throw a
+        // TDZ ReferenceError on ("Cannot access 'AkauntingModalAddNew' before
+        // initialization"); Webpack tolerated it, Vite/Rollup does not.
+        AkauntingModalAddNew: () => import('./AkauntingModalAddNew'),
         AkauntingRadioGroup,
-        AkauntingSelect,
         AkauntingModal,
         AkauntingMoney,
         AkauntingDate,
@@ -936,9 +938,8 @@ export default {
                         template: '<div><akaunting-modal-add-new modal-dialog-class="max-w-md" modal-position-top :show="add_new.show" @submit="onSubmit" @cancel="onCancel" :buttons="add_new.buttons" :title="add_new.text" :is_component=true :message="add_new.html"></akaunting-modal-add-new></div>',
 
                         components: {
-                            AkauntingModalAddNew,
+                            AkauntingModalAddNew: () => import('./AkauntingModalAddNew'),
                             AkauntingRadioGroup,
-                            AkauntingSelect,
                             AkauntingModal,
                             AkauntingMoney,
                             AkauntingDate,

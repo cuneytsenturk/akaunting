@@ -53,7 +53,6 @@
 <script>
 import { SlideYUpTransition } from "vue2-transitions";
 import AkauntingRadioGroup from './AkauntingRadioGroup';
-import AkauntingSelect from './AkauntingSelect';
 import AkauntingDate from './AkauntingDate';
 import AkauntingRecurring from './AkauntingRecurring';
 import AkauntingMoney from './AkauntingMoney';
@@ -64,7 +63,6 @@ export default {
     components: {
         SlideYUpTransition,
         AkauntingRadioGroup,
-        AkauntingSelect,
         AkauntingDate,
         AkauntingRecurring,
         AkauntingMoney,

@@ -208,9 +208,11 @@
                 let lang_split = document.documentElement.lang.split("-");
 
                 if (lang_split[0] !== 'en') {
-                    const lang = require(`flatpickr/dist/l10n/${lang_split[0]}.js`).default[lang_split[0]];
-
-                    this.dateConfig.locale = lang;
+                    import(`flatpickr/dist/l10n/${lang_split[0]}.js`)
+                        .then(module => {
+                            this.dateConfig.locale = module.default[lang_split[0]];
+                        })
+                        .catch(() => {});
                 }
             }
 

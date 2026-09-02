@@ -308,11 +308,9 @@ import Vue from 'vue';
 
 import { Select, Option, OptionGroup, ColorPicker } from 'element-ui';
 
-import AkauntingModalAddNew from './AkauntingModalAddNew';
 import AkauntingModal from './AkauntingModal';
 import AkauntingMoney from './AkauntingMoney';
 import AkauntingRadioGroup from './AkauntingRadioGroup';
-import AkauntingSelect from './AkauntingSelect';
 import AkauntingDate from './AkauntingDate';
 import AkauntingRecurring from './AkauntingRecurring';
 
@@ -326,9 +324,10 @@ export default {
         [Option.name]: Option,
         [OptionGroup.name]: OptionGroup,
         [ColorPicker.name]: ColorPicker,
-        AkauntingModalAddNew,
+        // Dynamic import — see AkauntingSelect.vue for why (circular dependency
+        // with AkauntingModalAddNew; Rollup TDZ hazard that Webpack tolerated).
+        AkauntingModalAddNew: () => import('./AkauntingModalAddNew'),
         AkauntingRadioGroup,
-        AkauntingSelect,
         AkauntingModal,
         AkauntingMoney,
         AkauntingDate,
@@ -1298,9 +1297,8 @@ export default {
                         template: '<div><akaunting-modal-add-new modal-dialog-class="max-w-md" modal-position-top :show="add_new.show" @submit="onSubmit" @cancel="onCancel" :buttons="add_new.buttons" :title="add_new.text" :is_component=true :message="add_new.html"></akaunting-modal-add-new></div>',
 
                         components: {
-                            AkauntingModalAddNew,
+                            AkauntingModalAddNew: () => import('./AkauntingModalAddNew'),
                             AkauntingRadioGroup,
-                            AkauntingSelect,
                             AkauntingModal,
                             AkauntingMoney,
                             AkauntingDate,
